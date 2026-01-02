@@ -1,0 +1,301 @@
+const englishTeachers = [
+  {
+    id: 201,
+    name: "MD. ATOWAR RAHMAN MAHADI",
+    designation: "Professor",
+    department: "ENG",
+    email: "atowar@diu.edu.bd",
+    phone: "01711028355",
+    office: "English Department",
+    research_interests: "Language Teaching, Literature",
+    image: "/images/teachers/english/atowar.jpg"
+  },
+  {
+    id: 202,
+    name: "MOHAMMAD SHAFI ALAM CHOWDHURY",
+    designation: "Associate Professor (Student Welfare)",
+    department: "ENG",
+    email: "shafi.eng@diu.edu.bd",
+    phone: "01675010999",
+    office: "English Department",
+    research_interests: "Applied Linguistics, Student Welfare",
+    image: "/images/teachers/english/shafi.jpg"
+  },
+  {
+    id: 203,
+    name: "MRS RAHNUMA",
+    designation: "Associate Professor & Joint Director",
+    department: "ENG",
+    email: "rahnuma@diu.edu.bd",
+    phone: "01730129859",
+    office: "English Department",
+    research_interests: "Literature, Creative Writing",
+    image: "/images/teachers/english/rahnuma.jpg"
+  },
+  {
+    id: 204,
+    name: "DR. SAZZAD HOSSAIN",
+    designation: "Associate Professor & Provost",
+    department: "ENG",
+    email: "sazzad.eng@diu.edu.bd",
+    phone: "01730032725",
+    office: "English Department",
+    research_interests: "Applied Linguistics, Language Assessment",
+    image: "/images/teachers/english/sazzad.jpg"
+  },
+  {
+    id: 205,
+    name: "S. JUWARI AL AHMED",
+    designation: "Assistant Professor",
+    department: "ENG",
+    email: "juwairalahmed.ie@diu.edu.bd",
+    phone: "01679186231",
+    office: "English Department",
+    research_interests: "Literature, Cultural Studies",
+    image: "/images/teachers/english/juwari.jpg"
+  },
+  {
+    id: 206,
+    name: "ARIF AHMAD",
+    designation: "Assistant Professor & Chairperson",
+    department: "ENG",
+    email: "arif@diu.edu.bd",
+    phone: "01923871880",
+    office: "English Department",
+    research_interests: "Language Teaching, Curriculum Development",
+    image: "/images/teachers/english/arif.jpg"
+  },
+  {
+    id: 207,
+    name: "MS. TAHMINA SULTANA",
+    designation: "Assistant Professor",
+    department: "ENG",
+    email: "tahmina@diu.edu.bd",
+    phone: "01765050890",
+    office: "English Department",
+    research_interests: "Literature, Sociolinguistics",
+    image: "/images/teachers/english/tahmina.jpg"
+  },
+  {
+    id: 208,
+    name: "DR. MD. ZAHIDUL ISLAM",
+    designation: "Assistant Professor",
+    department: "ENG",
+    email: "zahidul.islam@diu.edu.bd",
+    phone: "01719073018",
+    office: "English Department",
+    research_interests: "Applied Linguistics, Discourse Analysis",
+    image: "/images/teachers/english/zahidul.jpg"
+  },
+  {
+    id: 209,
+    name: "DR. MD. ABDUL KAIUM AZAD",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "kaium.eng@diu.edu.bd",
+    phone: "01968017767",
+    office: "English Department",
+    research_interests: "Language Teaching, Assessment",
+    image: "/images/teachers/english/kaium.jpg"
+  },
+  {
+    id: 210,
+    name: "MAHIUL ISLAM",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "mahiul.eng@diu.edu.bd",
+    phone: "01933933748",
+    office: "English Department",
+    research_interests: "Literature, Creative Writing",
+    image: "/images/teachers/english/mahiul.jpg"
+  },
+  {
+    id: 211,
+    name: "AFKIG TALUKDER",
+    designation: "Assistant Professor",
+    department: "ENG",
+    email: "afkig@diu.edu.bd",
+    phone: "01686054594",
+    office: "English Department",
+    research_interests: "Literature, Critical Theory",
+    image: "/images/teachers/english/afkig.jpg"
+  },
+  {
+    id: 212,
+    name: "AMENA BEGUM",
+    designation: "Assistant Professor",
+    department: "ENG",
+    email: "amenabegum@diu.edu.bd",
+    phone: "01683588877",
+    office: "English Department",
+    research_interests: "Applied Linguistics, Language Education",
+    image: "/images/teachers/english/amena.jpg"
+  },
+  {
+    id: 213,
+    name: "MD. REZWAN ISLAM",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "rezwan.eng@diu.edu.bd",
+    phone: "01628331554",
+    office: "English Department",
+    research_interests: "Literature, Postcolonial Studies",
+    image: "/images/teachers/english/rezwan.jpg"
+  },
+  {
+    id: 214,
+    name: "NAHYA TABASSUM",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "nahya@diu.edu.bd",
+    phone: "01765605255",
+    office: "English Department",
+    research_interests: "Language Teaching, Communication Skills",
+    image: "/images/teachers/english/nahya.jpg"
+  },
+  {
+    id: 215,
+    name: "NUSRAT TARANNUM",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "nusrattarannum@diu.ie",
+    phone: "01677182002",
+    office: "English Department",
+    research_interests: "Literature, Gender Studies",
+    image: "/images/teachers/english/nusrat.jpg"
+  },
+  {
+    id: 216,
+    name: "MS. SHAHARUM MAHJUDY FARUK",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "shaharum@diu.edu.bd",
+    phone: "01819480377",
+    office: "English Department",
+    research_interests: "Applied Linguistics, Phonetics",
+    image: "/images/teachers/english/shaharum.jpg"
+  },
+  {
+    id: 217,
+    name: "IFRAT BINTE MOON (ORNATE)",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "ifratbinte.english@diu.ie",
+    phone: "01841922424",
+    office: "English Department",
+    research_interests: "Literature, Contemporary Fiction",
+    image: "/images/teachers/english/ifrat.jpg"
+  },
+  {
+    id: 218,
+    name: "SAKUNDA MIRTUS ANDREA",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "sakunda@diu.edu.bd",
+    phone: "01771432257",
+    office: "English Department",
+    research_interests: "Language Teaching, ESP",
+    image: "/images/teachers/english/sakunda.jpg"
+  },
+  {
+    id: 219,
+    name: "PROJIT RAHMAN",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "projitrahman@diu.ie",
+    phone: "01837195543",
+    office: "English Department",
+    research_interests: "Literature, Film Studies",
+    image: "/images/teachers/english/projit.jpg"
+  },
+  {
+    id: 220,
+    name: "SAYEDA ABEDIN SAFURA",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "sayeda.eng@diu.edu.bd",
+    phone: "01971704345",
+    office: "English Department",
+    research_interests: "Applied Linguistics, Language Acquisition",
+    image: "/images/teachers/english/sayeda.jpg"
+  },
+  {
+    id: 221,
+    name: "MD. FAZLE RABBI",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "fazle@diu.edu.bd",
+    phone: "01821251213",
+    office: "English Department",
+    research_interests: "Literature, Translation Studies",
+    image: "/images/teachers/english/fazle.jpg"
+  },
+  {
+    id: 222,
+    name: "TANJIM LASKER",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "tanjim@diu.edu.bd",
+    phone: "01917434221",
+    office: "English Department",
+    research_interests: "Language Teaching, Psycholinguistics",
+    image: "/images/teachers/english/tanjim.jpg"
+  },
+  {
+    id: 223,
+    name: "RUBANA AREFIN SONATA",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "rubana.eng@diu.ie",
+    phone: "01554988285",
+    office: "English Department",
+    research_interests: "Literature, Drama Studies",
+    image: "/images/teachers/english/rubana.jpg"
+  },
+  {
+    id: 224,
+    name: "SADIA FERROUS",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "sadia.eng@diu.edu.bd",
+    phone: "01779043318",
+    office: "English Department",
+    research_interests: "Applied Linguistics, Material Development",
+    image: "/images/teachers/english/sadia.jpg"
+  },
+  {
+    id: 225,
+    name: "SAKIRA ANJUM",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "sakira.e@diu.ie",
+    phone: "01320894710",
+    office: "English Department",
+    research_interests: "Language Teaching, Assessment",
+    image: "/images/teachers/english/sakira.jpg"
+  },
+  {
+    id: 226,
+    name: "TANJIMI JAHAN",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "tanjimi@diu.edu.bd",
+    phone: "01536883214",
+    office: "English Department",
+    research_interests: "Literature, Poetry",
+    image: "/images/teachers/english/tanjimi.jpg"
+  },
+  {
+    id: 227,
+    name: "RASIDUL MAHMOD",
+    designation: "Lecturer",
+    department: "ENG",
+    email: "rasidul.e@diu.edu.bd",
+    phone: "01768659823",
+    office: "English Department",
+    research_interests: "Applied Linguistics, Language Testing",
+    image: "/images/teachers/english/rasidul.jpg"
+  }
+];
+
+module.exports = englishTeachers;
