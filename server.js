@@ -18,6 +18,7 @@ const routineRoutes = require('./routes/routineRoutes');
 const researchPaperRoutes = require('./routes/researchPaperRoutes');
 const hostelRoutes = require('./routes/hostelRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
+const activityLogRoutes = require('./routes/activityLogRoutes');
 
 // Initialize Express app
 const app = express();
@@ -69,6 +70,7 @@ app.use('/api/routines', routineRoutes);
 app.use('/api/research-papers', researchPaperRoutes);
 app.use('/api/hostel', hostelRoutes);
 app.use('/api', departmentRoutes);
+app.use('/api/activity-logs', activityLogRoutes);
 
 // ======================================================
 // Error Handling
