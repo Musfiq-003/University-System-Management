@@ -2,18 +2,19 @@
 const express = require('express');
 const router = express.Router();
 const hostelController = require('../controllers/hostelController');
+const { verifyToken, verifyRole } = require('../middleware/authMiddleware');
 
-// POST: Add a new hostel student allocation
+// POST: Add a new hostel student allocation (Admin only)
 // Body: { student_name, student_id, hostel_name, room_number, department, allocated_date }
-router.post('/', hostelController.addHostelStudent);
+router.post('/', verifyToken, verifyRole(['admin']), hostelController.addHostelStudent);
 
-// GET: Get all hostel student records
-router.get('/', hostelController.getAllHostelStudents);
+// GET: Get all hostel student records (All authenticated users)
+router.get('/', verifyToken, hostelController.getAllHostelStudents);
 
-// GET: Get students by hostel name
-router.get('/hostel/:hostelName', hostelController.getStudentsByHostel);
+// GET: Get students by hostel name (All authenticated users)
+router.get('/hostel/:hostelName', verifyToken, hostelController.getStudentsByHostel);
 
-// GET: Get student by student ID
-router.get('/student/:studentId', hostelController.getStudentById);
+// GET: Get student by student ID (All authenticated users)
+router.get('/student/:studentId', verifyToken, hostelController.getStudentById);
 
 module.exports = router;

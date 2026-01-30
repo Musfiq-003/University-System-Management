@@ -32,11 +32,11 @@ const PORT = process.env.PORT || 3000;
 // Enable CORS for cross-origin requests
 app.use(cors());
 
-// Parse JSON request bodies
-app.use(bodyParser.json());
+// Parse JSON request bodies with size limit (prevent DoS attacks)
+app.use(bodyParser.json({ limit: '10mb' }));
 
-// Parse URL-encoded request bodies
-app.use(bodyParser.urlencoded({ extended: true }));
+// Parse URL-encoded request bodies with size limit
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 // Log incoming requests (simple logging middleware)
 app.use((req, res, next) => {
