@@ -13,6 +13,7 @@ router.post('/', verifyToken, verifyRole(['faculty', 'student', 'admin']), resea
 router.patch('/:id/status', verifyToken, verifyRole(['admin']), researchPaperController.updatePaperStatus);
 
 // GET: Get all research papers (All authenticated users)
+// Query params: page, limit, search, department, status, year, user_id
 router.get('/', verifyToken, researchPaperController.getAllResearchPapers);
 
 // GET: Get research papers by department (All authenticated users)
@@ -20,5 +21,11 @@ router.get('/department/:department', verifyToken, researchPaperController.getPa
 
 // GET: Get research papers by status (All authenticated users)
 router.get('/status/:status', verifyToken, researchPaperController.getPapersByStatus);
+
+// PUT: Update a research paper (Owner or Admin)
+router.put('/:id', verifyToken, researchPaperController.updateResearchPaper);
+
+// DELETE: Delete a research paper (Owner or Admin)
+router.delete('/:id', verifyToken, researchPaperController.deleteResearchPaper);
 
 module.exports = router;

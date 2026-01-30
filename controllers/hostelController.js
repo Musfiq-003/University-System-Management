@@ -63,19 +63,64 @@ exports.addHostelStudent = async (req, res) => {
 };
 
 /**
- * Get all hostel student records
+ * Get all hostel student records with pagination and search
  * @route GET /api/hostel
+ * @query page, limit, search, hostel_name, department
  */
 exports.getAllHostelStudents = async (req, res) => {
   try {
-    // Query to fetch all hostel students ordered by hostel name and room number
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+    
+    // Search and filter parameters
+    const search = req.query.search || '';
+    const hostelName = req.query.hostel_name || '';
+    const department = req.query.department || '';
+    
+    // Build WHERE clause dynamically
+    let whereConditions = [];
+    let params = [];
+    
+    if (search) {
+      whereConditions.push('(student_name LIKE ? OR student_id LIKE ?)');
+      params.push(`%${search}%`, `%${search}%`);
+    }
+    
+    if (hostelName) {
+      whereConditions.push('hostel_name = ?');
+      params.push(hostelName);
+    }
+    
+    if (department) {
+      whereConditions.push('department = ?');
+      params.push(department);
+    }
+    
+    const whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
+    
+    // Get total count for pagination
+    const [countResult] = await db.query(
+      `SELECT COUNT(*) as total FROM hostel_students ${whereClause}`,
+      params
+    );
+    const totalItems = countResult[0].total;
+    const totalPages = Math.ceil(totalItems / limit);
+    
+    // Query with pagination
     const [students] = await db.query(
-      'SELECT * FROM hostel_students ORDER BY hostel_name, room_number'
+      `SELECT * FROM hostel_students ${whereClause} ORDER BY hostel_name, room_number LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
     );
 
     res.status(200).json({
       success: true,
       count: students.length,
+      totalItems,
+      totalPages,
+      currentPage: page,
+      itemsPerPage: limit,
       data: students
     });
   } catch (error) {
@@ -83,6 +128,86 @@ exports.getAllHostelStudents = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch hostel students',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update hostel student allocation
+ * @route PUT /api/hostel/:id
+ */
+exports.updateHostelStudent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { student_name, hostel_name, room_number, department, allocated_date } = req.body;
+    
+    // Check if record exists
+    const [existing] = await db.query('SELECT id FROM hostel_students WHERE id = ?', [id]);
+    
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Hostel student record not found'
+      });
+    }
+    
+    // Update record
+    await db.query(
+      `UPDATE hostel_students SET 
+        student_name = COALESCE(?, student_name),
+        hostel_name = COALESCE(?, hostel_name),
+        room_number = COALESCE(?, room_number),
+        department = COALESCE(?, department),
+        allocated_date = COALESCE(?, allocated_date)
+      WHERE id = ?`,
+      [student_name, hostel_name, room_number, department, allocated_date, id]
+    );
+    
+    res.status(200).json({
+      success: true,
+      message: 'Hostel student record updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating hostel student:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update hostel student record',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Delete hostel student allocation
+ * @route DELETE /api/hostel/:id
+ */
+exports.deleteHostelStudent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if record exists
+    const [existing] = await db.query('SELECT id FROM hostel_students WHERE id = ?', [id]);
+    
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Hostel student record not found'
+      });
+    }
+    
+    // Delete record
+    await db.query('DELETE FROM hostel_students WHERE id = ?', [id]);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Hostel student record deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting hostel student:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete hostel student record',
       error: error.message
     });
   }

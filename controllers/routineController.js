@@ -81,14 +81,55 @@ exports.addRoutine = async (req, res) => {
 };
 
 /**
- * Get all routines - DIU Format
+ * Get all routines - DIU Format with Pagination and Search
  * @route GET /api/routines
+ * @query page - Page number (default: 1)
+ * @query limit - Items per page (default: 20)
+ * @query department - Filter by department
+ * @query batch - Filter by batch
+ * @query semester - Filter by semester
  */
 exports.getAllRoutines = async (req, res) => {
   try {
-    // Query to fetch all routines
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+    
+    // Filter parameters
+    const { department, batch, semester } = req.query;
+    
+    // Build dynamic query
+    let whereClause = [];
+    let params = [];
+    
+    if (department) {
+      whereClause.push('department = ?');
+      params.push(department);
+    }
+    if (batch) {
+      whereClause.push('batch = ?');
+      params.push(batch);
+    }
+    if (semester) {
+      whereClause.push('semester = ?');
+      params.push(semester);
+    }
+    
+    const whereSQL = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+    
+    // Get total count for pagination
+    const [countResult] = await db.query(
+      `SELECT COUNT(*) as total FROM routines ${whereSQL}`,
+      params
+    );
+    const totalItems = countResult[0]?.total || 0;
+    const totalPages = Math.ceil(totalItems / limit);
+    
+    // Query to fetch routines with pagination
     const [routines] = await db.query(
-      `SELECT * FROM routines ORDER BY created_at DESC`
+      `SELECT * FROM routines ${whereSQL} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
     );
 
     // Parse JSON fields
@@ -98,10 +139,14 @@ exports.getAllRoutines = async (req, res) => {
       time_slots: JSON.parse(routine.time_slots || '{}')
     }));
 
-    // Return the list of routines
+    // Return the list of routines with pagination info
     res.status(200).json({
       success: true,
       count: parsedRoutines.length,
+      totalItems,
+      totalPages,
+      currentPage: page,
+      itemsPerPage: limit,
       data: parsedRoutines
     });
   } catch (error) {
@@ -109,6 +154,103 @@ exports.getAllRoutines = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch routines',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Delete a routine
+ * @route DELETE /api/routines/:id
+ */
+exports.deleteRoutine = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if routine exists
+    const [existing] = await db.query('SELECT id FROM routines WHERE id = ?', [id]);
+    
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Routine not found'
+      });
+    }
+    
+    // Delete the routine
+    await db.query('DELETE FROM routines WHERE id = ?', [id]);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Routine deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting routine:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete routine',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update a routine
+ * @route PUT /api/routines/:id
+ */
+exports.updateRoutine = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      department, batch, semester, shift, students_count,
+      room_number, counselor_name, counselor_contact,
+      courses, time_slots, academic_year, effective_from
+    } = req.body;
+    
+    // Check if routine exists
+    const [existing] = await db.query('SELECT id FROM routines WHERE id = ?', [id]);
+    
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Routine not found'
+      });
+    }
+    
+    // Convert objects to JSON strings
+    const coursesJSON = courses ? JSON.stringify(courses) : null;
+    const timeSlotsJSON = time_slots ? JSON.stringify(time_slots) : null;
+    
+    // Update routine
+    await db.query(
+      `UPDATE routines SET 
+        department = COALESCE(?, department),
+        batch = COALESCE(?, batch),
+        semester = COALESCE(?, semester),
+        shift = COALESCE(?, shift),
+        students_count = COALESCE(?, students_count),
+        room_number = COALESCE(?, room_number),
+        counselor_name = COALESCE(?, counselor_name),
+        counselor_contact = COALESCE(?, counselor_contact),
+        courses = COALESCE(?, courses),
+        time_slots = COALESCE(?, time_slots),
+        academic_year = COALESCE(?, academic_year),
+        effective_from = COALESCE(?, effective_from)
+      WHERE id = ?`,
+      [department, batch, semester, shift, students_count,
+       room_number, counselor_name, counselor_contact,
+       coursesJSON, timeSlotsJSON, academic_year, effective_from, id]
+    );
+    
+    res.status(200).json({
+      success: true,
+      message: 'Routine updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating routine:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update routine',
       error: error.message
     });
   }

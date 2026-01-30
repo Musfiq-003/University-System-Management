@@ -9,9 +9,16 @@ const { verifyToken, verifyRole } = require('../middleware/authMiddleware');
 router.post('/', verifyToken, verifyRole(['faculty', 'admin']), routineController.addRoutine);
 
 // GET: Get all routines (All authenticated users)
+// Query params: page, limit, department, batch, semester (for pagination/filtering)
 router.get('/', verifyToken, routineController.getAllRoutines);
 
 // GET: Get routines by specific day (All authenticated users)
 router.get('/day/:day', verifyToken, routineController.getRoutinesByDay);
+
+// PUT: Update a routine (Faculty and Admin only)
+router.put('/:id', verifyToken, verifyRole(['faculty', 'admin']), routineController.updateRoutine);
+
+// DELETE: Delete a routine (Admin only)
+router.delete('/:id', verifyToken, verifyRole(['admin']), routineController.deleteRoutine);
 
 module.exports = router;

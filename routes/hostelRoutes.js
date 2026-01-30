@@ -9,6 +9,7 @@ const { verifyToken, verifyRole } = require('../middleware/authMiddleware');
 router.post('/', verifyToken, verifyRole(['admin']), hostelController.addHostelStudent);
 
 // GET: Get all hostel student records (All authenticated users)
+// Query params: page, limit, search, hostel_name, department
 router.get('/', verifyToken, hostelController.getAllHostelStudents);
 
 // GET: Get students by hostel name (All authenticated users)
@@ -16,5 +17,11 @@ router.get('/hostel/:hostelName', verifyToken, hostelController.getStudentsByHos
 
 // GET: Get student by student ID (All authenticated users)
 router.get('/student/:studentId', verifyToken, hostelController.getStudentById);
+
+// PUT: Update hostel student allocation (Admin only)
+router.put('/:id', verifyToken, verifyRole(['admin']), hostelController.updateHostelStudent);
+
+// DELETE: Delete hostel student allocation (Admin only)
+router.delete('/:id', verifyToken, verifyRole(['admin']), hostelController.deleteHostelStudent);
 
 module.exports = router;

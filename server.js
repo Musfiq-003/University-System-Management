@@ -18,6 +18,7 @@ const routineRoutes = require('./routes/routineRoutes');
 const researchPaperRoutes = require('./routes/researchPaperRoutes');
 const hostelRoutes = require('./routes/hostelRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 // Initialize Express app
 const app = express();
@@ -52,12 +53,15 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
   res.json({
     message: 'Welcome to University Management System API',
-    version: '2.0.0',
+    version: '2.1.0',
     endpoints: {
       auth: '/api/auth',
       routines: '/api/routines',
       researchPapers: '/api/research-papers',
-      hostel: '/api/hostel'
+      hostel: '/api/hostel',
+      dashboard: '/api/dashboard',
+      departments: '/api/departments',
+      teachers: '/api/teachers'
     },
     documentation: 'See README.md for complete API documentation'
   });
@@ -68,6 +72,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/routines', routineRoutes);
 app.use('/api/research-papers', researchPaperRoutes);
 app.use('/api/hostel', hostelRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api', departmentRoutes);
 
 // ======================================================
