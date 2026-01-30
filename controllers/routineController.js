@@ -3,26 +3,51 @@
 const db = require('../config/db');
 
 /**
- * Add a new class routine
+ * Add a new class routine - DIU Format
  * @route POST /api/routines
  */
 exports.addRoutine = async (req, res) => {
   try {
     // Extract data from request body
-    const { course, teacher, department, start_time, end_time, batch } = req.body;
+    const { 
+      department, 
+      batch, 
+      semester, 
+      shift, 
+      students_count,
+      room_number,
+      counselor_name,
+      counselor_contact,
+      courses, // JSON array of course objects
+      time_slots, // JSON object with day-wise time slots
+      academic_year,
+      effective_from
+    } = req.body;
 
     // Validate required fields
-    if (!course || !teacher || !department || !start_time || !end_time || !batch) {
+    if (!department || !batch || !semester || !shift || !courses || !time_slots) {
       return res.status(400).json({
         success: false,
-        message: 'All fields are required (course, teacher, department, start_time, end_time, batch)'
+        message: 'Required fields: department, batch, semester, shift, courses, time_slots'
       });
     }
 
+    // Convert objects to JSON strings for storage
+    const coursesJSON = JSON.stringify(courses);
+    const timeSlotsJSON = JSON.stringify(time_slots);
+
     // Insert routine into database
     const [result] = await db.query(
-      'INSERT INTO routines (course, teacher, department, start_time, end_time, batch) VALUES (?, ?, ?, ?, ?, ?)',
-      [course, teacher, department, start_time, end_time, batch]
+      `INSERT INTO routines (
+        department, batch, semester, shift, students_count, 
+        room_number, counselor_name, counselor_contact, 
+        courses, time_slots, academic_year, effective_from
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        department, batch, semester, shift, students_count,
+        room_number, counselor_name, counselor_contact,
+        coursesJSON, timeSlotsJSON, academic_year, effective_from
+      ]
     );
 
     // Return success response with the new routine ID
@@ -31,12 +56,18 @@ exports.addRoutine = async (req, res) => {
       message: 'Routine added successfully',
       data: {
         id: result.insertId,
-        course,
-        teacher,
         department,
-        start_time,
-        end_time,
-        batch
+        batch,
+        semester,
+        shift,
+        students_count,
+        room_number,
+        counselor_name,
+        counselor_contact,
+        courses,
+        time_slots,
+        academic_year,
+        effective_from
       }
     });
   } catch (error) {
@@ -50,30 +81,28 @@ exports.addRoutine = async (req, res) => {
 };
 
 /**
- * Get all routines
+ * Get all routines - DIU Format
  * @route GET /api/routines
  */
 exports.getAllRoutines = async (req, res) => {
   try {
-    // Query to fetch all routines ordered by day and start time
+    // Query to fetch all routines
     const [routines] = await db.query(
-      `SELECT * FROM routines ORDER BY 
-       CASE day 
-         WHEN 'Monday' THEN 1
-         WHEN 'Tuesday' THEN 2
-         WHEN 'Wednesday' THEN 3
-         WHEN 'Thursday' THEN 4
-         WHEN 'Friday' THEN 5
-         WHEN 'Saturday' THEN 6
-         WHEN 'Sunday' THEN 7
-       END, start_time`
+      `SELECT * FROM routines ORDER BY created_at DESC`
     );
+
+    // Parse JSON fields
+    const parsedRoutines = routines.map(routine => ({
+      ...routine,
+      courses: JSON.parse(routine.courses || '[]'),
+      time_slots: JSON.parse(routine.time_slots || '{}')
+    }));
 
     // Return the list of routines
     res.status(200).json({
       success: true,
-      count: routines.length,
-      data: routines
+      count: parsedRoutines.length,
+      data: parsedRoutines
     });
   } catch (error) {
     console.error('Error fetching routines:', error);

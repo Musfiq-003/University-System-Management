@@ -28,6 +28,7 @@ function AppLayout() {
   const [activeTab, setActiveTab] = useState('home');
   const [user, setUser] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -63,8 +64,18 @@ function AppLayout() {
 
   return (
     <div className="App">
+      {/* Hamburger Menu Button */}
+      <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      {/* Sidebar Overlay */}
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
+
       {/* Sidebar Navigation */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <div className="sidebar-logo-icon">🎓</div>
@@ -90,19 +101,19 @@ function AppLayout() {
         
         <ul className="nav-menu">
           <li className={activeTab === 'home' ? 'active' : ''}>
-            <Link to="/" onClick={() => setActiveTab('home')}>
+            <Link to="/" onClick={() => { setActiveTab('home'); setSidebarOpen(false); }}>
               <span className="nav-icon">🏠</span>
               <span>Home</span>
             </Link>
           </li>
           <li className={activeTab === 'routines' ? 'active' : ''}>
-            <Link to="/routines" onClick={() => setActiveTab('routines')}>
+            <Link to="/routines" onClick={() => { setActiveTab('routines'); setSidebarOpen(false); }}>
               <span className="nav-icon">📅</span>
               <span>Routines</span>
             </Link>
           </li>
           <li className={activeTab === 'research' ? 'active' : ''}>
-            <Link to="/research-papers" onClick={() => setActiveTab('research')}>
+            <Link to="/research-papers" onClick={() => { setActiveTab('research'); setSidebarOpen(false); }}>
               <span className="nav-icon">📚</span>
               <span>Research Papers</span>
             </Link>
@@ -110,21 +121,21 @@ function AppLayout() {
           {/* Only show Hostel for students and admin, not faculty */}
           {user && user.role !== 'faculty' && (
             <li className={activeTab === 'hostel' ? 'active' : ''}>
-              <Link to="/hostel" onClick={() => setActiveTab('hostel')}>
+              <Link to="/hostel" onClick={() => { setActiveTab('hostel'); setSidebarOpen(false); }}>
                 <span className="nav-icon">🏢</span>
                 <span>Hostel</span>
               </Link>
             </li>
           )}
           <li className={activeTab === 'teachers' ? 'active' : ''}>
-            <Link to="/teachers" onClick={() => setActiveTab('teachers')}>
+            <Link to="/teachers" onClick={() => { setActiveTab('teachers'); setSidebarOpen(false); }}>
               <span className="nav-icon">👨‍🏫</span>
               <span>Faculty</span>
             </Link>
           </li>
           {user && user.role === 'admin' && (
             <li className={activeTab === 'users' ? 'active' : ''}>
-              <Link to="/users" onClick={() => setActiveTab('users')}>
+              <Link to="/users" onClick={() => { setActiveTab('users'); setSidebarOpen(false); }}>
                 <span className="nav-icon">👥</span>
                 <span>User Management</span>
               </Link>
@@ -187,7 +198,7 @@ function AppLayout() {
             <Route path="/research-papers" element={
               <div>
                 <AddResearchPaper userRole={user?.role} />
-                <ResearchPaperList userRole={user?.role} />
+                <ResearchPaperList userRole={user?.role} userName={user?.full_name} />
               </div>
             } />
             {/* Only allow students and admin to access hostel */}
