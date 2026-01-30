@@ -1,0 +1,301 @@
+const lawTeachers = [
+  {
+    id: 501,
+    name: "PROF. DR. ABDULLAH-AL-MONSUR",
+    designation: "Professor & Dean, Faculty Of Law",
+    department: "LAW",
+    email: "monsur.law@diu.ac",
+    phone: "01819056501",
+    office: "Law Department",
+    research_interests: "Constitutional Law, Human Rights",
+    image: "/images/teachers/law/abdullah.jpg"
+  },
+  {
+    id: 502,
+    name: "NUSRAT JAHAN HABIB",
+    designation: "Lecturer",
+    department: "LAW",
+    email: "nusrat.law@diu.ac",
+    phone: "01953377158",
+    office: "Law Department",
+    research_interests: "Criminal Law, Legal Studies",
+    image: "/images/teachers/law/nusrat_habib.jpg"
+  },
+  {
+    id: 503,
+    name: "NUSRAT JAHAN PANNA",
+    designation: "Lecturer",
+    department: "LAW",
+    email: "nusrat.panna@diu.ac",
+    phone: "01923729757",
+    office: "Law Department",
+    research_interests: "Civil Law, Legal Practice",
+    image: "/images/teachers/law/nusrat_panna.jpg"
+  },
+  {
+    id: 504,
+    name: "FARROQUE ZAMAN RIFAT",
+    designation: "Lecturer",
+    department: "LAW",
+    email: "rifat.law@diu.ac",
+    phone: "01558003203",
+    office: "Law Department",
+    research_interests: "International Law, Human Rights",
+    image: "/images/teachers/law/rifat.jpg"
+  },
+  {
+    id: 505,
+    name: "MANSURE ALAM",
+    designation: "Lecturer",
+    department: "LAW",
+    email: "mansure.law@diu.ac",
+    phone: "01727323932",
+    office: "Law Department",
+    research_interests: "Family Law, Legal Theory",
+    image: "/images/teachers/law/mansure.jpg"
+  },
+  {
+    id: 506,
+    name: "SHIHAERUL ISLAM",
+    designation: "Lecturer",
+    department: "LAW",
+    email: "shihaerul.law@diu.ac",
+    phone: "01792434040",
+    office: "Law Department",
+    research_interests: "Corporate Law, Business Law",
+    image: "/images/teachers/law/shihaerul.jpg"
+  },
+  {
+    id: 507,
+    name: "PROFESSOR DR. MUHAMMED MAHBUBER RAHMAN",
+    designation: "Professor & Faculty",
+    department: "LAW",
+    email: "mahbuber.law@diu.ac",
+    phone: "01711111111",
+    office: "Law Department",
+    research_interests: "Constitutional Law, Jurisprudence",
+    image: "/images/teachers/law/mahbuber.jpg"
+  },
+  {
+    id: 508,
+    name: "MD. LIAUF RAHMAN",
+    designation: "Associate Professor",
+    department: "LAW",
+    email: "liauf.rahman@diu.ac",
+    phone: "01869704142",
+    office: "Law Department",
+    research_interests: "Criminal Law, Evidence Law",
+    image: "/images/teachers/law/liauf.jpg"
+  },
+  {
+    id: 509,
+    name: "MSS. MILY SULTANA",
+    designation: "Associate Professor",
+    department: "LAW",
+    email: "mily@diu.ac",
+    phone: "01918086854",
+    office: "Law Department",
+    research_interests: "Family Law, Women's Rights",
+    image: "/images/teachers/law/mily.jpg"
+  },
+  {
+    id: 510,
+    name: "MRS. SUMERA BANU BEGUM",
+    designation: "Associate Professor",
+    department: "LAW",
+    email: "sumera.law@diu.ac",
+    phone: "01717090000",
+    office: "Law Department",
+    research_interests: "Constitutional Law, Administrative Law",
+    image: "/images/teachers/law/sumera.jpg"
+  },
+  {
+    id: 511,
+    name: "ROKSANA AKTER",
+    designation: "Associate Professor",
+    department: "LAW",
+    email: "roksana@diu.ac",
+    phone: "01715037100",
+    office: "Law Department",
+    research_interests: "Civil Law, Contract Law",
+    image: "/images/teachers/law/roksana.jpg"
+  },
+  {
+    id: 512,
+    name: "MRS. SHAMSUN SULTANA",
+    designation: "Associate Professor",
+    department: "LAW",
+    email: "shamsi@diu.ac",
+    phone: "01711096854",
+    office: "Law Department",
+    research_interests: "Criminal Law, Procedural Law",
+    image: "/images/teachers/law/shamsun.jpg"
+  },
+  {
+    id: 513,
+    name: "MD. BAZLUL ISLAM SOURAV",
+    designation: "Associate Professor",
+    department: "LAW",
+    email: "sourav.law@diu.ac",
+    phone: "01829460100",
+    office: "Law Department",
+    research_interests: "International Law, Trade Law",
+    image: "/images/teachers/law/sourav.jpg"
+  },
+  {
+    id: 514,
+    name: "DR. UTTAM KUMAR DAS",
+    designation: "Associate Professor",
+    department: "LAW",
+    email: "uttam@diu.ac",
+    phone: "01789668616",
+    office: "Law Department",
+    research_interests: "Constitutional Law, Human Rights",
+    image: "/images/teachers/law/uttam.jpg"
+  },
+  {
+    id: 515,
+    name: "NASIR AHMAD",
+    designation: "Associate Professor & Chairman",
+    department: "LAW",
+    email: "nasir.law@diu.ac",
+    phone: "01796982561",
+    office: "Law Department",
+    research_interests: "Administrative Law, Legal Theory",
+    image: "/images/teachers/law/nasir.jpg"
+  },
+  {
+    id: 516,
+    name: "MOHAINAM MOHASIN",
+    designation: "Associate Professor",
+    department: "LAW",
+    email: "mohasin.law@diu.ac",
+    phone: "01824151129",
+    office: "Law Department",
+    research_interests: "Corporate Law, Business Law",
+    image: "/images/teachers/law/mohasin.jpg"
+  },
+  {
+    id: 517,
+    name: "MS. ARIF RABBANI BHUIYAN",
+    designation: "Associate Professor",
+    department: "LAW",
+    email: "rabbani.law@diu.ac",
+    phone: "01771077694",
+    office: "Law Department",
+    research_interests: "Criminal Law, Justice System",
+    image: "/images/teachers/law/rabbani.jpg"
+  },
+  {
+    id: 518,
+    name: "IMTIAZ AHMED PAVEL",
+    designation: "Associate Professor",
+    department: "LAW",
+    email: "pavel.law@diu.ac",
+    phone: "01518000723",
+    office: "Law Department",
+    research_interests: "Civil Law, Property Law",
+    image: "/images/teachers/law/pavel.jpg"
+  },
+  {
+    id: 519,
+    name: "MIRDED HASAN ANIK",
+    designation: "Associate Professor",
+    department: "LAW",
+    email: "mirded.law@diu.ac",
+    phone: "01776924823",
+    office: "Law Department",
+    research_interests: "Constitutional Law, Governance",
+    image: "/images/teachers/law/mirded.jpg"
+  },
+  {
+    id: 520,
+    name: "MD. JINANAT HOSSAIN",
+    designation: "Lecturer",
+    department: "LAW",
+    email: "jinanat.law@diu.ac",
+    phone: "01978011863",
+    office: "Law Department",
+    research_interests: "International Law, Treaties",
+    image: "/images/teachers/law/jinanat.jpg"
+  },
+  {
+    id: 521,
+    name: "MD. ZOBAYEF AKON",
+    designation: "Lecturer",
+    department: "LAW",
+    email: "zobayef@diu.ac",
+    phone: "01831729391",
+    office: "Law Department",
+    research_interests: "Criminal Law, Legal Practice",
+    image: "/images/teachers/law/zobayef.jpg"
+  },
+  {
+    id: 522,
+    name: "MD. RIAD MEDIN",
+    designation: "Lecturer",
+    department: "LAW",
+    email: "riad.law@diu.ac",
+    phone: "01868355007",
+    office: "Law Department",
+    research_interests: "Civil Law, Legal Theory",
+    image: "/images/teachers/law/riad.jpg"
+  },
+  {
+    id: 523,
+    name: "JAKARIRUL ISLAM",
+    designation: "Lecturer",
+    department: "LAW",
+    email: "jakarirul.law@diu.ac",
+    phone: "01977715002",
+    office: "Law Department",
+    research_interests: "Family Law, Personal Law",
+    image: "/images/teachers/law/jakarirul.jpg"
+  },
+  {
+    id: 524,
+    name: "SHARJIMAN MAHBUIB MIMAR",
+    designation: "Lecturer",
+    department: "LAW",
+    email: "mimar.law@diu.ac",
+    phone: "01841772261",
+    office: "Law Department",
+    research_interests: "Corporate Law, Commercial Law",
+    image: "/images/teachers/law/mimar.jpg"
+  },
+  {
+    id: 525,
+    name: "SOVE AKBAR",
+    designation: "Lecturer",
+    department: "LAW",
+    email: "sove.law@diu.ac",
+    phone: "01742061201",
+    office: "Law Department",
+    research_interests: "Criminal Law, Evidence Law",
+    image: "/images/teachers/law/sove.jpg"
+  },
+  {
+    id: 526,
+    name: "ADV. KAMAL UZZAMAN BHUIYAN",
+    designation: "Lecturer",
+    department: "LAW",
+    email: "kamaluzzaman@diu.ac",
+    phone: "01710066622",
+    office: "Law Department",
+    research_interests: "Legal Practice, Advocacy",
+    image: "/images/teachers/law/kamal.jpg"
+  },
+  {
+    id: 527,
+    name: "MD. ASADULLAH GALIR",
+    designation: "Lecturer",
+    department: "LAW",
+    email: "galir.law@diu.ac",
+    phone: "01737250754",
+    office: "Law Department",
+    research_interests: "Constitutional Law, Legal Studies",
+    image: "/images/teachers/law/asadullah.jpg"
+  }
+];
+
+module.exports = lawTeachers;
