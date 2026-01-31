@@ -78,8 +78,8 @@
   margin-bottom: 2rem;
 }
 
-.stat-card {
-  background: white;
+.faculty-dashboard .stat-card {
+  background: #ffffff !important;
   padding: 1.5rem 1.8rem;
   border-radius: 16px;
   display: flex;
@@ -91,7 +91,7 @@
   border: 1px solid #e5e7eb;
 }
 
-.stat-card:hover {
+.faculty-dashboard .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
@@ -133,16 +133,16 @@
   min-width: 0;
 }
 
-.stat-value {
+.faculty-dashboard .stat-value {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #000000;
+  color: #000000 !important;
   line-height: 1;
   margin-bottom: 0.4rem;
 }
 
-.stat-label {
-  color: #1f2937;
+.faculty-dashboard .stat-label {
+  color: #000000 !important;
   font-size: 1rem;
   font-weight: 700;
 }
@@ -168,7 +168,7 @@
 }
 
 .dashboard-card {
-  background: white;
+  background: #ffffff;
   border-radius: 20px;
   padding: 2rem;
   box-shadow: 0 10px 30px rgba(0,0,0,0.08);
@@ -190,7 +190,7 @@
 
 .card-header h2 {
   font-size: 1.3rem;
-  color: #2d3748;
+  color: #000000;
   margin: 0;
   font-weight: 700;
 }
@@ -257,7 +257,7 @@
 
 .timeline-details h3 {
   font-size: 1.1rem;
-  color: #2d3748;
+  color: #000000;
   margin: 0 0 0.8rem 0;
   font-weight: 600;
 }
@@ -399,7 +399,7 @@
 }
 
 .activity-action {
-  color: #2d3748;
+  color: #000000;
   font-weight: 500;
   margin: 0 0 0.3rem 0;
   font-size: 0.95rem;

@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './FacultyDashboard.css';
 
 function FacultyDashboard({ user }) {
+  const navigate = useNavigate();
+  
   const [stats, setStats] = useState({
     todayClasses: 3,
     totalCourses: 5,
@@ -147,7 +150,7 @@ function FacultyDashboard({ user }) {
               </div>
             ))}
           </div>
-          <button className="view-full-schedule">View Full Schedule →</button>
+          <button className="view-full-schedule" onClick={() => navigate('/routines')}>View Full Schedule →</button>
         </div>
 
         {/* Quick Actions */}
@@ -156,27 +159,27 @@ function FacultyDashboard({ user }) {
             <h2>⚡ Quick Actions</h2>
           </div>
           <div className="quick-actions-grid">
-            <button className="action-btn primary">
+            <button className="action-btn primary" onClick={() => navigate('/research-papers')}>
               <span className="action-icon">📝</span>
               <span className="action-text">Submit Research</span>
             </button>
-            <button className="action-btn secondary">
+            <button className="action-btn secondary" onClick={() => navigate('/routines')}>
               <span className="action-icon">📅</span>
               <span className="action-text">View Routines</span>
             </button>
-            <button className="action-btn success">
+            <button className="action-btn success" onClick={() => navigate('/hostel')}>
               <span className="action-icon">👨‍🎓</span>
               <span className="action-text">My Students</span>
             </button>
-            <button className="action-btn info">
+            <button className="action-btn info" onClick={() => alert('Reports feature coming soon!')}>
               <span className="action-icon">📊</span>
               <span className="action-text">Reports</span>
             </button>
-            <button className="action-btn warning">
+            <button className="action-btn warning" onClick={() => alert('Messages feature coming soon!')}>
               <span className="action-icon">📧</span>
               <span className="action-text">Messages</span>
             </button>
-            <button className="action-btn dark">
+            <button className="action-btn dark" onClick={() => alert('Settings feature coming soon!')}>
               <span className="action-icon">⚙️</span>
               <span className="action-text">Settings</span>
             </button>

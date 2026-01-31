@@ -116,15 +116,18 @@ function AddResearchPaper({ userRole }) {
           </div>
         </div>
 
-        <div className="form-group">
-          <label>Status *</label>
-          <select name="status" value={formData.status} onChange={handleChange} required>
-            <option value="Draft">Draft</option>
-            <option value="Under Review">Under Review</option>
-            <option value="Published">Published</option>
-            <option value="Rejected">Rejected</option>
-          </select>
-        </div>
+        {/* Status field only visible for admin */}
+        {userRole === 'admin' && (
+          <div className="form-group">
+            <label>Status *</label>
+            <select name="status" value={formData.status} onChange={handleChange} required>
+              <option value="Draft">Draft</option>
+              <option value="Under Review">Under Review</option>
+              <option value="Published">Published</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+        )}
 
         <button type="submit" className="btn btn-primary" disabled={loading}>
           {loading ? 'Submitting...' : (userRole === 'admin' ? 'Add Research Paper' : 'Submit Paper')}

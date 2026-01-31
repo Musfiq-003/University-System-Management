@@ -32,7 +32,7 @@ function Home() {
 
       {/* Hero Section */}
       <div className="hero-section">
-        <h1>Welcome to University Management System</h1>
+        <h1>Welcome to DIU</h1>
         <p className="hero-subtitle">Manage your university operations efficiently and effectively</p>
       </div>
 

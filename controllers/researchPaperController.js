@@ -110,88 +110,76 @@ exports.updatePaperStatus = async (req, res) => {
 };
 
 /**
- * Get all research papers with search and pagination
+ * Get all research papers with pagination and search
  * @route GET /api/research-papers
- * Query params: page, limit, search, department, status, year
+ * @query page, limit, search, department, status, year
  */
 exports.getAllResearchPapers = async (req, res) => {
   try {
-    const { 
-      page = 1, 
-      limit = 20, 
-      search = '', 
-      department = '', 
-      status = '', 
-      year = '' 
-    } = req.query;
-    
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
     
-    // Build query dynamically
-    let query = 'SELECT * FROM research_papers WHERE 1=1';
-    const params = [];
+    // Search and filter parameters
+    const search = req.query.search || '';
+    const department = req.query.department || '';
+    const status = req.query.status || '';
+    const year = req.query.year || '';
+    const userId = req.query.user_id || '';
+    
+    // Build WHERE clause dynamically
+    let whereConditions = [];
+    let params = [];
     
     if (search) {
-      query += ' AND (title LIKE ? OR author LIKE ?)';
-      const searchTerm = `%${search}%`;
-      params.push(searchTerm, searchTerm);
+      whereConditions.push('(title LIKE ? OR author LIKE ?)');
+      params.push(`%${search}%`, `%${search}%`);
     }
     
     if (department) {
-      query += ' AND department = ?';
+      whereConditions.push('department = ?');
       params.push(department);
     }
     
     if (status) {
-      query += ' AND status = ?';
+      whereConditions.push('status = ?');
       params.push(status);
     }
     
     if (year) {
-      query += ' AND year = ?';
-      params.push(parseInt(year));
+      whereConditions.push('year = ?');
+      params.push(year);
     }
     
-    query += ' ORDER BY year DESC, created_at DESC LIMIT ? OFFSET ?';
-    params.push(parseInt(limit), parseInt(offset));
+    if (userId) {
+      whereConditions.push('user_id = ?');
+      params.push(userId);
+    }
     
-    // Get papers
-    const [papers] = await db.query(query, params);
+    const whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
     
     // Get total count for pagination
-    let countQuery = 'SELECT COUNT(*) as total FROM research_papers WHERE 1=1';
-    const countParams = [];
+    const [countResult] = await db.query(
+      `SELECT COUNT(*) as total FROM research_papers ${whereClause}`,
+      params
+    );
+    const totalItems = countResult[0].total;
+    const totalPages = Math.ceil(totalItems / limit);
     
-    if (search) {
-      countQuery += ' AND (title LIKE ? OR author LIKE ?)';
-      const searchTerm = `%${search}%`;
-      countParams.push(searchTerm, searchTerm);
-    }
-    
-    if (department) {
-      countQuery += ' AND department = ?';
-      countParams.push(department);
-    }
-    
-    if (status) {
-      countQuery += ' AND status = ?';
-      countParams.push(status);
-    }
-    
-    if (year) {
-      countQuery += ' AND year = ?';
-      countParams.push(parseInt(year));
-    }
-    
-    const [countResult] = await db.query(countQuery, countParams);
-    const total = countResult[0].total;
+    // Query with pagination
+    const [papers] = await db.query(
+      `SELECT * FROM research_papers ${whereClause} ORDER BY year DESC, created_at DESC LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
 
     res.status(200).json({
       success: true,
       count: papers.length,
-      total: total,
-      page: parseInt(page),
-      totalPages: Math.ceil(total / limit),
+      totalItems,
+      totalPages,
+      currentPage: page,
+      itemsPerPage: limit,
       data: papers
     });
   } catch (error) {
@@ -199,6 +187,101 @@ exports.getAllResearchPapers = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch research papers',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Delete a research paper
+ * @route DELETE /api/research-papers/:id
+ */
+exports.deleteResearchPaper = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if paper exists
+    const [existing] = await db.query('SELECT id, user_id FROM research_papers WHERE id = ?', [id]);
+    
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Research paper not found'
+      });
+    }
+    
+    // Check if user is admin or owner of the paper
+    if (req.user.role !== 'admin' && existing[0].user_id !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You can only delete your own research papers'
+      });
+    }
+    
+    // Delete the paper
+    await db.query('DELETE FROM research_papers WHERE id = ?', [id]);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Research paper deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting research paper:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete research paper',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update a research paper
+ * @route PUT /api/research-papers/:id
+ */
+exports.updateResearchPaper = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, author, department, year, abstract } = req.body;
+    
+    // Check if paper exists
+    const [existing] = await db.query('SELECT id, user_id FROM research_papers WHERE id = ?', [id]);
+    
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Research paper not found'
+      });
+    }
+    
+    // Check if user is admin or owner of the paper
+    if (req.user.role !== 'admin' && existing[0].user_id !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You can only update your own research papers'
+      });
+    }
+    
+    // Update paper (status cannot be updated here, use updatePaperStatus)
+    await db.query(
+      `UPDATE research_papers SET 
+        title = COALESCE(?, title),
+        author = COALESCE(?, author),
+        department = COALESCE(?, department),
+        year = COALESCE(?, year)
+      WHERE id = ?`,
+      [title, author, department, year, id]
+    );
+    
+    res.status(200).json({
+      success: true,
+      message: 'Research paper updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating research paper:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update research paper',
       error: error.message
     });
   }
@@ -259,141 +342,6 @@ exports.getPapersByStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch research papers',
-      error: error.message
-    });
-  }
-};
-
-/**
- * Get single research paper by ID
- * @route GET /api/research-papers/:id
- */
-exports.getResearchPaperById = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Query specific research paper
-    const [papers] = await db.query(
-      'SELECT * FROM research_papers WHERE id = ?',
-      [id]
-    );
-
-    if (papers.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Research paper not found'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: papers[0]
-    });
-  } catch (error) {
-    console.error('Error fetching research paper:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch research paper',
-      error: error.message
-    });
-  }
-};
-
-/**
- * Update entire research paper
- * @route PUT /api/research-papers/:id
- */
-exports.updateResearchPaper = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { title, author, department, year, status } = req.body;
-
-    // Validate required fields
-    if (!title || !author || !department || !year) {
-      return res.status(400).json({
-        success: false,
-        message: 'Required fields: title, author, department, year'
-      });
-    }
-
-    // Validate status if provided
-    if (status) {
-      const validStatuses = ['Draft', 'Under Review', 'Published', 'Rejected'];
-      if (!validStatuses.includes(status)) {
-        return res.status(400).json({
-          success: false,
-          message: `Invalid status. Valid values: ${validStatuses.join(', ')}`
-        });
-      }
-    }
-
-    // Update the research paper in database
-    const [result] = await db.query(
-      'UPDATE research_papers SET title = ?, author = ?, department = ?, year = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [title, author, department, year, status || 'Draft', id]
-    );
-
-    // Check if paper was found and updated
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Research paper not found'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: 'Research paper updated successfully',
-      data: {
-        id: parseInt(id),
-        title,
-        author,
-        department,
-        year,
-        status: status || 'Draft'
-      }
-    });
-  } catch (error) {
-    console.error('Error updating research paper:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update research paper',
-      error: error.message
-    });
-  }
-};
-
-/**
- * Delete research paper
- * @route DELETE /api/research-papers/:id
- */
-exports.deleteResearchPaper = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Delete research paper from database
-    const [result] = await db.query(
-      'DELETE FROM research_papers WHERE id = ?',
-      [id]
-    );
-
-    // Check if paper was found and deleted
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Research paper not found'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: 'Research paper deleted successfully'
-    });
-  } catch (error) {
-    console.error('Error deleting research paper:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete research paper',
       error: error.message
     });
   }

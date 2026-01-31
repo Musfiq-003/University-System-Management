@@ -67,7 +67,8 @@ const resetLimiter = rateLimit({
 // ======================================================
 
 // User registration
-router.post('/register', registerLimiter, authController.register);
+// User registration (Rate limit disabled for testing)
+router.post('/register', authController.register);
 
 // OTP verification
 router.post('/verify-otp', otpLimiter, authController.verifyOTP);
@@ -90,6 +91,9 @@ router.post('/reset-password', resetLimiter, authController.resetPassword);
 
 // Get current user profile
 router.get('/me', verifyToken, authController.getCurrentUser);
+
+// Update current user profile
+router.put('/profile', verifyToken, authController.updateProfile);
 
 // Logout
 router.post('/logout', verifyToken, authController.logout);

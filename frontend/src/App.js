@@ -12,6 +12,7 @@ import HostelList from './components/Hostel/HostelList';
 import Home from './components/Home';
 import FacultyDashboard from './components/FacultyDashboard';
 import StudentDashboard from './components/StudentDashboard';
+import AdminDashboard from './components/AdminDashboard';
 
 // Import authentication components
 import Login from './components/Auth/Login';
@@ -22,15 +23,21 @@ import ResetPassword from './components/Auth/ResetPassword';
 import ProtectedRoute from './components/ProtectedRoute';
 import UserManagement from './components/UserManagement';
 import Teachers from './components/Teachers/Teachers';
+import CourseManagement from './components/Admin/CourseManagement';
+import ResultManagement from './components/Admin/ResultManagement';
+import AccountManagement from './components/Admin/AccountManagement';
+import NoticeManagement from './components/Admin/NoticeManagement';
+import Settings from './components/Settings';
 
 // Main App Layout Component (with sidebar)
 function AppLayout() {
   const [activeTab, setActiveTab] = useState('home');
   const [user, setUser] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Load user info on mount
   useEffect(() => {
     const userInfo = localStorage.getItem('user_info');
@@ -42,7 +49,7 @@ function AppLayout() {
       }
     }
   }, []);
-  
+
   // Update active tab based on route
   useEffect(() => {
     const path = location.pathname;
@@ -50,8 +57,9 @@ function AppLayout() {
     else if (path === '/routines') setActiveTab('routines');
     else if (path.includes('research')) setActiveTab('research');
     else if (path === '/hostel') setActiveTab('hostel');
+    else if (path === '/settings') setActiveTab('settings');
   }, [location]);
-  
+
   // Handle logout
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
@@ -63,18 +71,28 @@ function AppLayout() {
 
   return (
     <div className="App">
+      {/* Hamburger Menu Button */}
+      <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      {/* Sidebar Overlay */}
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
+
       {/* Sidebar Navigation */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <div className="sidebar-logo-icon">🎓</div>
             <div>
-              <h2>University</h2>
-              <p>Management System</p>
+              <h2>DIU</h2>
+
             </div>
           </div>
         </div>
-        
+
         {/* User Profile Section */}
         {user && (
           <div className="user-profile">
@@ -87,22 +105,22 @@ function AppLayout() {
             </div>
           </div>
         )}
-        
+
         <ul className="nav-menu">
           <li className={activeTab === 'home' ? 'active' : ''}>
-            <Link to="/" onClick={() => setActiveTab('home')}>
+            <Link to="/" onClick={() => { setActiveTab('home'); setSidebarOpen(false); }}>
               <span className="nav-icon">🏠</span>
               <span>Home</span>
             </Link>
           </li>
           <li className={activeTab === 'routines' ? 'active' : ''}>
-            <Link to="/routines" onClick={() => setActiveTab('routines')}>
+            <Link to="/routines" onClick={() => { setActiveTab('routines'); setSidebarOpen(false); }}>
               <span className="nav-icon">📅</span>
               <span>Routines</span>
             </Link>
           </li>
           <li className={activeTab === 'research' ? 'active' : ''}>
-            <Link to="/research-papers" onClick={() => setActiveTab('research')}>
+            <Link to="/research-papers" onClick={() => { setActiveTab('research'); setSidebarOpen(false); }}>
               <span className="nav-icon">📚</span>
               <span>Research Papers</span>
             </Link>
@@ -110,28 +128,34 @@ function AppLayout() {
           {/* Only show Hostel for students and admin, not faculty */}
           {user && user.role !== 'faculty' && (
             <li className={activeTab === 'hostel' ? 'active' : ''}>
-              <Link to="/hostel" onClick={() => setActiveTab('hostel')}>
+              <Link to="/hostel" onClick={() => { setActiveTab('hostel'); setSidebarOpen(false); }}>
                 <span className="nav-icon">🏢</span>
                 <span>Hostel</span>
               </Link>
             </li>
           )}
           <li className={activeTab === 'teachers' ? 'active' : ''}>
-            <Link to="/teachers" onClick={() => setActiveTab('teachers')}>
+            <Link to="/teachers" onClick={() => { setActiveTab('teachers'); setSidebarOpen(false); }}>
               <span className="nav-icon">👨‍🏫</span>
               <span>Faculty</span>
             </Link>
           </li>
           {user && user.role === 'admin' && (
             <li className={activeTab === 'users' ? 'active' : ''}>
-              <Link to="/users" onClick={() => setActiveTab('users')}>
+              <Link to="/users" onClick={() => { setActiveTab('users'); setSidebarOpen(false); }}>
                 <span className="nav-icon">👥</span>
                 <span>User Management</span>
               </Link>
             </li>
           )}
+          <li className={activeTab === 'settings' ? 'active' : ''}>
+            <Link to="/settings" onClick={() => { setActiveTab('settings'); setSidebarOpen(false); }}>
+              <span className="nav-icon">⚙️</span>
+              <span>Settings</span>
+            </Link>
+          </li>
         </ul>
-        
+
         {/* Logout Button */}
         <div className="sidebar-footer">
           <button onClick={handleLogout} className="logout-btn">
@@ -149,6 +173,7 @@ function AppLayout() {
             {activeTab === 'routines' && 'Routine'}
             {activeTab === 'research' && 'Research Papers'}
             {activeTab === 'hostel' && user?.role !== 'faculty' && 'Hostel'}
+            {activeTab === 'settings' && 'Settings'}
           </h1>
           <div className="user-info">
             <div className="user-menu-wrapper">
@@ -162,6 +187,9 @@ function AppLayout() {
                     <div className="user-dropdown-role">{user?.role}</div>
                   </div>
                   <div className="user-dropdown-divider"></div>
+                  <Link to="/settings" className="user-dropdown-item" onClick={() => setShowUserMenu(false)}>
+                    <span>⚙️</span> Settings
+                  </Link>
                   <button onClick={handleLogout} className="user-dropdown-item logout-item">
                     <span>🚪</span> Logout
                   </button>
@@ -174,9 +202,10 @@ function AppLayout() {
         <div className="main-content">
           <Routes>
             <Route path="/" element={
-              user?.role === 'faculty' ? <FacultyDashboard user={user} /> :
-              user?.role === 'student' ? <StudentDashboard user={user} /> :
-              <Home />
+              user?.role === 'admin' ? <AdminDashboard user={user} /> :
+                user?.role === 'faculty' ? <FacultyDashboard user={user} /> :
+                  user?.role === 'student' ? <StudentDashboard user={user} /> :
+                    <Home />
             } />
             <Route path="/routines" element={
               <div>
@@ -187,7 +216,7 @@ function AppLayout() {
             <Route path="/research-papers" element={
               <div>
                 <AddResearchPaper userRole={user?.role} />
-                <ResearchPaperList userRole={user?.role} />
+                <ResearchPaperList userRole={user?.role} userName={user?.full_name} />
               </div>
             } />
             {/* Only allow students and admin to access hostel */}
@@ -201,12 +230,23 @@ function AppLayout() {
             )}
             <Route path="/teachers" element={<Teachers />} />
             <Route path="/users" element={<UserManagement />} />
+            <Route path="/settings" element={<Settings />} />
+
+            {/* Admin Management Routes */}
+            {user?.role === 'admin' && (
+              <>
+                <Route path="/courses" element={<CourseManagement />} />
+                <Route path="/results" element={<ResultManagement />} />
+                <Route path="/accounts" element={<AccountManagement />} />
+                <Route path="/notices" element={<NoticeManagement />} />
+              </>
+            )}
           </Routes>
         </div>
 
         {/* Footer */}
         <footer className="footer">
-          <p>&copy; 2025 University Management System. All rights reserved.</p>
+          <p>&copy; 2025 DIU Management System. All rights reserved.</p>
         </footer>
       </div>
     </div>
@@ -224,7 +264,7 @@ function App() {
         <Route path="/verify-otp" element={<VerifyOTP />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        
+
         {/* Protected Routes (Authentication Required) */}
         <Route path="/*" element={
           <ProtectedRoute>

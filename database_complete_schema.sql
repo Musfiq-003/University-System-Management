@@ -181,6 +181,61 @@ CREATE TABLE activity_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ======================================================
+-- NOTICES TABLE
+-- ======================================================
+CREATE TABLE notices (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NULL,
+  publish_date DATE NULL,
+  target_audience ENUM('all', 'students', 'faculty') DEFAULT 'all',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ======================================================
+-- STUDENT ACCOUNTS TABLE
+-- ======================================================
+CREATE TABLE student_accounts (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  studentId VARCHAR(50) NOT NULL UNIQUE,
+  payable DECIMAL(10,2) DEFAULT 0.00,
+  paid DECIMAL(10,2) DEFAULT 0.00,
+  due DECIMAL(10,2) GENERATED ALWAYS AS (payable - paid) STORED,
+  last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_studentId (studentId)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ======================================================
+-- STUDENT RESULTS TABLE
+-- ======================================================
+CREATE TABLE student_results (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  studentId VARCHAR(50) NOT NULL UNIQUE,
+  cgpa DECIMAL(3,2) DEFAULT 0.00,
+  credits_completed DECIMAL(5,1) DEFAULT 0.0,
+  total_credits_required DECIMAL(5,1) DEFAULT 140.0,
+  last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_studentId (studentId)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ======================================================
+-- PAYMENT HISTORY TABLE
+-- ======================================================
+CREATE TABLE payment_history (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  studentId VARCHAR(50) NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  payment_reason VARCHAR(100) NOT NULL COMMENT 'e.g. Tuition Fee, Hostel Fee, Semester Fee',
+  payment_method VARCHAR(50) DEFAULT 'Cash' COMMENT 'e.g. Cash, Bank Transfer, Bkash, Online',
+  transaction_reference VARCHAR(100) NULL COMMENT 'Bank Trx ID or Mobile Banking Trx ID',
+  status ENUM('pending', 'completed', 'failed') DEFAULT 'completed',
+  remarks TEXT NULL,
+  INDEX idx_student_payment (studentId),
+  INDEX idx_payment_date (payment_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ======================================================
 -- INSERT DEFAULT DATA
 -- ======================================================
 

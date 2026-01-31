@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { roomConfiguration } from '../../config/hostelConfig';
 
 function HostelList({ userRole }) {
   const [students, setStudents] = useState([]);
@@ -8,40 +9,33 @@ function HostelList({ userRole }) {
   const [searchStudentId, setSearchStudentId] = useState('');
   const [roomInfo, setRoomInfo] = useState([]);
 
-  // Room configuration with seat capacity
-  const roomConfiguration = [
-    { hostel: 'Shaheed Rafiq Uddin Hall', room: '101', totalSeats: 4 },
-    { hostel: 'Shaheed Rafiq Uddin Hall', room: '102', totalSeats: 4 },
-    { hostel: 'Shaheed Rafiq Uddin Hall', room: '103', totalSeats: 4 },
-    { hostel: 'Shaheed Rafiq Uddin Hall', room: '201', totalSeats: 4 },
-    { hostel: 'Shaheed Rafiq Uddin Hall', room: '202', totalSeats: 4 },
-    { hostel: 'Begum Sufia Kamal Hall', room: '101', totalSeats: 4 },
-    { hostel: 'Begum Sufia Kamal Hall', room: '102', totalSeats: 4 },
-    { hostel: 'Begum Sufia Kamal Hall', room: '103', totalSeats: 4 },
-    { hostel: 'Begum Sufia Kamal Hall', room: '201', totalSeats: 4 },
-    { hostel: 'Begum Sufia Kamal Hall', room: '202', totalSeats: 4 },
-  ];
+  // Room config imported from shared file
 
   const fetchStudents = async (hostel = '', studentId = '') => {
     setLoading(true);
     setError('');
     try {
       let url = '/api/hostel';
-      
+
       if (studentId.trim()) {
         url = `/api/hostel/student/${studentId.trim()}`;
       } else if (hostel.trim()) {
         url = `/api/hostel/hostel/${hostel.trim()}`;
       }
-      
-      const response = await fetch(url);
+
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const data = await response.json();
 
       if (data.success) {
         // Handle single student response
         const studentData = data.data ? (Array.isArray(data.data) ? data.data : [data.data]) : [];
         setStudents(studentData);
-        
+
         // Calculate room-wise occupancy for students and admin
         if (userRole === 'student' || userRole === 'admin') {
           const roomOccupancy = roomConfiguration.map(room => {
@@ -97,18 +91,18 @@ function HostelList({ userRole }) {
     <div className="list-container">
       <div className="list-header">
         <h2>{userRole === 'admin' ? 'Hostel Student Records' : 'Hostel Information'}</h2>
-        
+
         {/* Show room-wise seat information for students and admin */}
         {(userRole === 'student' || userRole === 'admin') && roomInfo.length > 0 && (
           <div style={{ marginBottom: '20px' }}>
             <h3 style={{ marginBottom: '15px', color: '#1976d2' }}>Room-wise Seat Availability</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
               {roomInfo.map((room, index) => (
-                <div 
+                <div
                   key={index}
-                  style={{ 
-                    padding: '15px', 
-                    backgroundColor: room.availableSeats > 0 ? '#e8f5e9' : '#ffebee', 
+                  style={{
+                    padding: '15px',
+                    backgroundColor: room.availableSeats > 0 ? '#e8f5e9' : '#ffebee',
                     borderRadius: '8px',
                     border: `2px solid ${room.availableSeats > 0 ? '#4caf50' : '#f44336'}`
                   }}
@@ -126,7 +120,7 @@ function HostelList({ userRole }) {
             </div>
           </div>
         )}
-        
+
         {/* Only show filters for admin */}
         {userRole === 'admin' && (
           <div className="filter-controls">
@@ -207,7 +201,7 @@ function HostelList({ userRole }) {
           <p>Your request will be reviewed by the administration.</p>
         </div>
       )}
-      
+
       <div className="list-footer">
         Total Records: {students.length}
       </div>

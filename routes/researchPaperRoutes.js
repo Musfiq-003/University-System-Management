@@ -4,28 +4,28 @@ const router = express.Router();
 const researchPaperController = require('../controllers/researchPaperController');
 const { verifyToken, verifyRole } = require('../middleware/authMiddleware');
 
-// GET: Get all research papers (protected - all authenticated users)
+// POST: Add a new research paper (Faculty, Students, and Admin)
+// Body: { title, author, department, year, status (optional) }
+router.post('/', verifyToken, verifyRole(['faculty', 'student', 'admin']), researchPaperController.addResearchPaper);
+
+// PATCH: Update research paper status (Admin only)
+// Body: { status }
+router.patch('/:id/status', verifyToken, verifyRole(['admin']), researchPaperController.updatePaperStatus);
+
+// GET: Get all research papers (All authenticated users)
+// Query params: page, limit, search, department, status, year, user_id
 router.get('/', verifyToken, researchPaperController.getAllResearchPapers);
 
-// GET: Get research papers by department (protected - all authenticated users)
+// GET: Get research papers by department (All authenticated users)
 router.get('/department/:department', verifyToken, researchPaperController.getPapersByDepartment);
 
-// GET: Get research papers by status (protected - all authenticated users)
+// GET: Get research papers by status (All authenticated users)
 router.get('/status/:status', verifyToken, researchPaperController.getPapersByStatus);
 
-// GET: Get single research paper (protected - all authenticated users)
-router.get('/:id', verifyToken, researchPaperController.getResearchPaperById);
+// PUT: Update a research paper (Owner or Admin)
+router.put('/:id', verifyToken, researchPaperController.updateResearchPaper);
 
-// POST: Add a new research paper (protected - admin and faculty only)
-router.post('/', verifyToken, verifyRole(['admin', 'faculty']), researchPaperController.addResearchPaper);
-
-// PUT: Update research paper (protected - admin and faculty only)
-router.put('/:id', verifyToken, verifyRole(['admin', 'faculty']), researchPaperController.updateResearchPaper);
-
-// PATCH: Update research paper status (protected - admin and faculty only)
-router.patch('/:id/status', verifyToken, verifyRole(['admin', 'faculty']), researchPaperController.updatePaperStatus);
-
-// DELETE: Delete research paper (protected - admin only)
-router.delete('/:id', verifyToken, verifyRole(['admin']), researchPaperController.deleteResearchPaper);
+// DELETE: Delete a research paper (Owner or Admin)
+router.delete('/:id', verifyToken, researchPaperController.deleteResearchPaper);
 
 module.exports = router;

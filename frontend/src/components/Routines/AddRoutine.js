@@ -2,17 +2,21 @@ import React, { useState } from 'react';
 
 function AddRoutine() {
   const [formData, setFormData] = useState({
+    department: '',
+    batch: '',
     course: '',
     teacher: '',
-    department: '',
+    day: 'Saturday',
     start_time: '',
     end_time: '',
-    batch: ''
+    room_number: ''
   });
-  const [message, setMessage] = useState({ text: '', type: '' });
-  const [loading, setLoading] = useState(false);
 
-  // Department and batch data structure
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Department and batch data
   const departmentBatchData = {
     'CSE': [
       ...Array.from({ length: 105 - 67 + 1 }, (_, i) => {
@@ -23,154 +27,157 @@ function AddRoutine() {
       }).flat(),
       ...Array.from({ length: 125 - 83 + 1 }, (_, i) => `E-${83 + i}`)
     ],
-    'Law': Array.from({ length: 73 - 62 + 1 }, (_, i) => `${62 + i}`),
-    'BBA': Array.from({ length: 122 - 93 + 1 }, (_, i) => `P-${93 + i}`),
-    'Civil': [
-      ...Array.from({ length: 27 - 15 + 1 }, (_, i) => `D-${15 + i}`),
-      ...Array.from({ length: 73 - 55 + 1 }, (_, i) => `E-${55 + i}`)
-    ],
-    'Economics': Array.from({ length: 21 - 11 + 1 }, (_, i) => `${11 + i}`),
-    'EEE': [
-      ...Array.from({ length: 68 - 47 + 1 }, (_, i) => `E-${47 + i}`),
-      ...Array.from({ length: 45 - 35 + 1 }, (_, i) => `D-${35 + i}`)
-    ],
-    'Political Science': Array.from({ length: 29 - 15 + 1 }, (_, i) => `${15 + i}`),
-    'English': Array.from({ length: 63 - 53 + 1 }, (_, i) => `Bi-${53 + i}`),
-    'Microbiology': Array.from({ length: 5 }, (_, i) => `${i + 1}`),
-    'BMB': Array.from({ length: 5 }, (_, i) => `${i + 1}`),
-    'Pharmacy': Array.from({ length: 40 - 24 + 1 }, (_, i) => `${24 + i}`),
-    'Sociology': Array.from({ length: 50 - 43 + 1 }, (_, i) => `B-${43 + i}`),
-    'Development Studies': Array.from({ length: 4 }, (_, i) => `${i + 1}`)
+    // ... other departments can be added here as needed
   };
 
-  // Get batch options based on selected department
-  const getBatchOptions = () => {
-    if (!formData.department) return [];
-    return departmentBatchData[formData.department] || [];
-  };
+  const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
 
-  const handleChange = (e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => {
-      // Reset batch if department changes
-      if (name === 'department') {
-        return { ...prev, [name]: value, batch: '' };
-      }
-      return { ...prev, [name]: value };
-    });
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage({ text: '', type: '' });
+    setError('');
+    setSuccess('');
 
     try {
+      const token = localStorage.getItem('auth_token');
+      // Append seconds if missing to match TIME format
+      const payload = {
+        ...formData,
+        start_time: formData.start_time.length === 5 ? `${formData.start_time}:00` : formData.start_time,
+        end_time: formData.end_time.length === 5 ? `${formData.end_time}:00` : formData.end_time
+      };
+
       const response = await fetch('/api/routines', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();
 
       if (data.success) {
-        setMessage({ text: 'Routine added successfully!', type: 'success' });
-        setFormData({
+        setSuccess('Class added successfully!');
+        // Keep department and batch for easier consecutive entry
+        setFormData(prev => ({
+          ...prev,
           course: '',
           teacher: '',
-          department: '',
+          day: 'Saturday',
           start_time: '',
           end_time: '',
-          batch: ''
-        });
-        // Trigger refresh of routine list
+          room_number: ''
+        }));
+        // Dispatch event to refresh routine list
         window.dispatchEvent(new Event('routineAdded'));
       } else {
-        setMessage({ text: data.message || 'Failed to add routine', type: 'error' });
+        setError(data.message || 'Failed to add class');
       }
     } catch (error) {
-      setMessage({ text: 'Error connecting to server', type: 'error' });
+      setError('Error connecting to server');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="form-container">
-      <h2>Add Class Routine</h2>
+    <div className="form-container" style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <h2>Add Class Session</h2>
+
+      {error && <div className="error-message">{error}</div>}
+      {success && <div className="success-message">{success}</div>}
+
       <form onSubmit={handleSubmit} className="form">
-        {message.text && (
-          <div className={`message ${message.type}`}>
-            {message.text}
+        <div className="form-row">
+          <div className="form-group">
+            <label>Department *</label>
+            <select
+              name="department"
+              value={formData.department}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="">Select Department</option>
+              <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+              <option value="Electrical & Electronic Engineering">Electrical & Electronic Engineering</option>
+              <option value="Civil Engineering">Civil Engineering</option>
+              <option value="Business Administration">Business Administration</option>
+              <option value="Law">Law</option>
+            </select>
           </div>
-        )}
-        
-        <div className="form-group">
-          <label>Course Name *</label>
-          <input
-            type="text"
-            name="course"
-            value={formData.course}
-            onChange={handleChange}
-            placeholder="e.g., Database Systems"
-            required
-          />
+
+          <div className="form-group">
+            <label>Batch *</label>
+            <input
+              type="text"
+              name="batch"
+              value={formData.batch}
+              onChange={handleInputChange}
+              placeholder="e.g. Batch-91"
+              required
+            />
+          </div>
         </div>
 
-        <div className="form-group">
-          <label>Teacher Name *</label>
-          <input
-            type="text"
-            name="teacher"
-            value={formData.teacher}
-            onChange={handleChange}
-            placeholder="e.g., Dr. John Smith"
-            required
-          />
+        <div className="form-row">
+          <div className="form-group">
+            <label>Course Name/Code *</label>
+            <input
+              type="text"
+              name="course"
+              value={formData.course}
+              onChange={handleInputChange}
+              placeholder="e.g. Operating System (0613-301)"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Teacher *</label>
+            <input
+              type="text"
+              name="teacher"
+              value={formData.teacher}
+              onChange={handleInputChange}
+              placeholder="e.g. Md. Nazmus Sakib"
+              required
+            />
+          </div>
         </div>
 
-        <div className="form-group">
-          <label>Department *</label>
-          <select
-            name="department"
-            value={formData.department}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select Department</option>
-            <option value="CSE">CSE</option>
-            <option value="Law">Law</option>
-            <option value="BBA">BBA</option>
-            <option value="Civil">Civil</option>
-            <option value="Economics">Economics</option>
-            <option value="EEE">EEE</option>
-            <option value="Political Science">Political Science</option>
-            <option value="English">English</option>
-            <option value="Microbiology">Microbiology</option>
-            <option value="BMB">BMB</option>
-            <option value="Pharmacy">Pharmacy</option>
-            <option value="Sociology">Sociology</option>
-            <option value="Development Studies">Development Studies</option>
-          </select>
-        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Day *</label>
+            <select
+              name="day"
+              value={formData.day}
+              onChange={handleInputChange}
+              required
+            >
+              {days.map(day => (
+                <option key={day} value={day}>{day}</option>
+              ))}
+            </select>
+          </div>
 
-        <div className="form-group">
-          <label>Batch *</label>
-          <select
-            name="batch"
-            value={formData.batch}
-            onChange={handleChange}
-            disabled={!formData.department}
-            required
-          >
-            <option value="">Select Batch</option>
-            {getBatchOptions().map(batch => (
-              <option key={batch} value={batch}>{batch}</option>
-            ))}
-          </select>
+          <div className="form-group">
+            <label>Room Number *</label>
+            <input
+              type="text"
+              name="room_number"
+              value={formData.room_number}
+              onChange={handleInputChange}
+              placeholder="e.g. Room-604"
+              required
+            />
+          </div>
         </div>
 
         <div className="form-row">
@@ -180,7 +187,7 @@ function AddRoutine() {
               type="time"
               name="start_time"
               value={formData.start_time}
-              onChange={handleChange}
+              onChange={handleInputChange}
               required
             />
           </div>
@@ -191,14 +198,19 @@ function AddRoutine() {
               type="time"
               name="end_time"
               value={formData.end_time}
-              onChange={handleChange}
+              onChange={handleInputChange}
               required
             />
           </div>
         </div>
 
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? 'Adding...' : 'Add Routine'}
+        <button
+          type="submit"
+          disabled={loading}
+          className="submit-btn"
+          style={{ width: '100%', marginTop: '20px' }}
+        >
+          {loading ? 'Adding Class...' : '✓ Add Class'}
         </button>
       </form>
     </div>

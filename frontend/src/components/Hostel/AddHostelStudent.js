@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getUniqueHostels, getRoomsByHostel } from '../../config/hostelConfig';
 
 function AddHostelStudent({ userRole }) {
   const [formData, setFormData] = useState({
@@ -11,6 +12,18 @@ function AddHostelStudent({ userRole }) {
   });
   const [message, setMessage] = useState({ text: '', type: '' });
   const [loading, setLoading] = useState(false);
+  const [availableRooms, setAvailableRooms] = useState([]);
+  const hostels = getUniqueHostels();
+
+  // Update available rooms when hostel changes
+  useEffect(() => {
+    if (formData.hostel_name) {
+      const rooms = getRoomsByHostel(formData.hostel_name);
+      setAvailableRooms(rooms);
+    } else {
+      setAvailableRooms([]);
+    }
+  }, [formData.hostel_name]);
 
   const handleChange = (e) => {
     setFormData({
@@ -25,10 +38,12 @@ function AddHostelStudent({ userRole }) {
     setMessage({ text: '', type: '' });
 
     try {
+      const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/hostel', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(formData),
       });
@@ -66,7 +81,7 @@ function AddHostelStudent({ userRole }) {
             {message.text}
           </div>
         )}
-        
+
         <div className="form-row">
           <div className="form-group">
             <label>Student Name *</label>
@@ -96,26 +111,35 @@ function AddHostelStudent({ userRole }) {
         <div className="form-row">
           <div className="form-group">
             <label>Hostel Name *</label>
-            <input
-              type="text"
+            <select
               name="hostel_name"
               value={formData.hostel_name}
               onChange={handleChange}
-              placeholder="e.g., North Hall"
               required
-            />
+              className="form-control"
+            >
+              <option value="">Select Hostel</option>
+              {hostels.map((hostel, index) => (
+                <option key={index} value={hostel}>{hostel}</option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">
             <label>Room Number *</label>
-            <input
-              type="text"
+            <select
               name="room_number"
               value={formData.room_number}
               onChange={handleChange}
-              placeholder="e.g., 101"
               required
-            />
+              disabled={!formData.hostel_name}
+              className="form-control"
+            >
+              <option value="">Select Room</option>
+              {availableRooms.map((room, index) => (
+                <option key={index} value={room.room}>Room {room.room}</option>
+              ))}
+            </select>
           </div>
         </div>
 

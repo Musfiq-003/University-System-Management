@@ -58,17 +58,22 @@ function initializeDatabase() {
     )
   `);
 
-  // Routines table
+  // Routines table - DIU Format
   db.exec(`
     CREATE TABLE IF NOT EXISTS routines (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      course TEXT NOT NULL,
-      teacher TEXT NOT NULL,
       department TEXT NOT NULL,
-      day TEXT,
-      start_time TEXT NOT NULL,
-      end_time TEXT NOT NULL,
       batch TEXT NOT NULL,
+      semester TEXT NOT NULL,
+      shift TEXT NOT NULL,
+      students_count INTEGER,
+      room_number TEXT,
+      counselor_name TEXT,
+      counselor_contact TEXT,
+      courses TEXT NOT NULL,
+      time_slots TEXT NOT NULL,
+      academic_year TEXT,
+      effective_from DATE,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);

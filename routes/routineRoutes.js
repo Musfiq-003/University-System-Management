@@ -4,28 +4,21 @@ const router = express.Router();
 const routineController = require('../controllers/routineController');
 const { verifyToken, verifyRole } = require('../middleware/authMiddleware');
 
-// GET: Get all routines (protected - all authenticated users)
+// POST: Add a new routine (Faculty and Admin only)
+// Body: { department, batch, semester, shift, courses, time_slots, etc. }
+router.post('/', verifyToken, verifyRole(['faculty', 'admin']), routineController.addRoutine);
+
+// GET: Get all routines (All authenticated users)
+// Query params: page, limit, department, batch, semester (for pagination/filtering)
 router.get('/', verifyToken, routineController.getAllRoutines);
 
-// GET: Get routines by specific day (protected - all authenticated users)
+// GET: Get routines by specific day (All authenticated users)
 router.get('/day/:day', verifyToken, routineController.getRoutinesByDay);
 
-// GET: Get routines by department (protected - all authenticated users)
-router.get('/department/:department', verifyToken, routineController.getRoutinesByDepartment);
+// PUT: Update a routine (Faculty and Admin only)
+router.put('/:id', verifyToken, verifyRole(['faculty', 'admin']), routineController.updateRoutine);
 
-// GET: Get routines by batch (protected - all authenticated users)
-router.get('/batch/:batch', verifyToken, routineController.getRoutinesByBatch);
-
-// GET: Get single routine (protected - all authenticated users)
-router.get('/:id', verifyToken, routineController.getRoutineById);
-
-// POST: Add a new routine (protected - admin and faculty only)
-router.post('/', verifyToken, verifyRole(['admin', 'faculty']), routineController.addRoutine);
-
-// PUT: Update routine (protected - admin and faculty only)
-router.put('/:id', verifyToken, verifyRole(['admin', 'faculty']), routineController.updateRoutine);
-
-// DELETE: Delete routine (protected - admin only)
+// DELETE: Delete a routine (Admin only)
 router.delete('/:id', verifyToken, verifyRole(['admin']), routineController.deleteRoutine);
 
 module.exports = router;

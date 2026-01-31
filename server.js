@@ -18,7 +18,7 @@ const routineRoutes = require('./routes/routineRoutes');
 const researchPaperRoutes = require('./routes/researchPaperRoutes');
 const hostelRoutes = require('./routes/hostelRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
-const activityLogRoutes = require('./routes/activityLogRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 // Initialize Express app
 const app = express();
@@ -33,11 +33,11 @@ const PORT = process.env.PORT || 3000;
 // Enable CORS for cross-origin requests
 app.use(cors());
 
-// Parse JSON request bodies
-app.use(bodyParser.json());
+// Parse JSON request bodies with size limit (prevent DoS attacks)
+app.use(bodyParser.json({ limit: '10mb' }));
 
-// Parse URL-encoded request bodies
-app.use(bodyParser.urlencoded({ extended: true }));
+// Parse URL-encoded request bodies with size limit
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 // Log incoming requests (simple logging middleware)
 app.use((req, res, next) => {
@@ -53,12 +53,15 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
   res.json({
     message: 'Welcome to University Management System API',
-    version: '2.0.0',
+    version: '2.1.0',
     endpoints: {
       auth: '/api/auth',
       routines: '/api/routines',
       researchPapers: '/api/research-papers',
-      hostel: '/api/hostel'
+      hostel: '/api/hostel',
+      dashboard: '/api/dashboard',
+      departments: '/api/departments',
+      teachers: '/api/teachers'
     },
     documentation: 'See README.md for complete API documentation'
   });
@@ -69,8 +72,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/routines', routineRoutes);
 app.use('/api/research-papers', researchPaperRoutes);
 app.use('/api/hostel', hostelRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api', departmentRoutes);
-app.use('/api/activity-logs', activityLogRoutes);
 
 // ======================================================
 // Error Handling

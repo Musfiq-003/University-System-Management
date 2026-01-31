@@ -17,47 +17,51 @@ exports.verifyToken = (req, res, next) => {
   try {
     // Get token from Authorization header
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader) {
       return res.status(401).json({
         success: false,
         message: 'No token provided. Please login.'
       });
     }
-    
+
     // Expected format: "Bearer <token>"
     const parts = authHeader.split(' ');
-    
+
     if (parts.length !== 2 || parts[0] !== 'Bearer') {
       return res.status(401).json({
         success: false,
         message: 'Invalid token format. Expected: Bearer <token>'
       });
     }
-    
+
     const token = parts[1];
-    
+
     // Verify token
     jwt.verify(token, JWT_SECRET, (err, decoded) => {
       if (err) {
+        console.error('JWT Verification Error:', err.name, err.message);
+        console.log('Received Token:', token.substring(0, 20) + '...');
+        console.log('Using Secret:', JWT_SECRET.substring(0, 5) + '...');
+
         if (err.name === 'TokenExpiredError') {
           return res.status(401).json({
             success: false,
             message: 'Token expired. Please login again.'
           });
         }
-        
+
         return res.status(401).json({
           success: false,
           message: 'Invalid token. Please login again.'
         });
       }
-      
+
       // Attach user info to request
       req.user = decoded;
       next();
     });
-    
+
   } catch (error) {
     console.error('Token verification error:', error);
     res.status(500).json({
@@ -81,16 +85,16 @@ exports.verifyRole = (allowedRoles) => {
           message: 'Authentication required'
         });
       }
-      
+
       const userRole = req.user.role;
-      
+
       if (!allowedRoles.includes(userRole)) {
         return res.status(403).json({
           success: false,
           message: `Access denied. Required roles: ${allowedRoles.join(', ')}`
         });
       }
-      
+
       next();
     } catch (error) {
       console.error('Role verification error:', error);
@@ -109,26 +113,26 @@ exports.verifyRole = (allowedRoles) => {
 exports.optionalAuth = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader) {
       return next();
     }
-    
+
     const parts = authHeader.split(' ');
-    
+
     if (parts.length !== 2 || parts[0] !== 'Bearer') {
       return next();
     }
-    
+
     const token = parts[1];
-    
+
     jwt.verify(token, JWT_SECRET, (err, decoded) => {
       if (!err) {
         req.user = decoded;
       }
       next();
     });
-    
+
   } catch (error) {
     // Ignore errors for optional auth
     next();

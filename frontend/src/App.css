@@ -22,6 +22,12 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.sidebar.sidebar-open {
+  transform: translateX(0);
 }
 
 .sidebar-header {
@@ -209,15 +215,18 @@
    ============================================ */
 .main-wrapper {
   flex: 1;
-  margin-left: 260px;
+  margin-left: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  transition: margin-left 0.3s ease;
 }
 
 .top-bar {
   background: white;
   padding: 1.25rem 2rem;
+  padding-left: 4rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
   justify-content: space-between;
@@ -359,11 +368,11 @@
 }
 
 .stat-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #ffffff;
   padding: 1.75rem;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
   transition: all 0.3s ease;
 }
 
@@ -405,7 +414,7 @@
 
 .stat-card h3 {
   font-size: 0.875rem;
-  color: white !important;
+  color: #000000 !important;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -415,7 +424,7 @@
 .stat-value {
   font-size: 2rem;
   font-weight: 700;
-  color: white !important;
+  color: #000000 !important;
   margin: 0.5rem 0 0 0;
 }
 
@@ -1027,35 +1036,13 @@
    ============================================ */
 @media (max-width: 1024px) {
   .sidebar {
-    width: 220px;
-  }
-
-  .main-wrapper {
-    margin-left: 220px;
+    width: 260px;
   }
 }
 
 @media (max-width: 768px) {
   .sidebar {
-    width: 70px;
-  }
-
-  .sidebar-logo p,
-  .nav-menu a span {
-    display: none;
-  }
-
-  .sidebar-logo h2 {
-    font-size: 0;
-  }
-
-  .nav-menu a {
-    justify-content: center;
-    padding: 1rem;
-  }
-
-  .main-wrapper {
-    margin-left: 70px;
+    width: 260px;
   }
 
   .hero-section h1 {
@@ -1085,10 +1072,6 @@
     padding: 0.75rem 0.5rem;
   }
 
-  .top-bar {
-    padding: 1rem;
-  }
-
   .page-title {
     font-size: 1.25rem;
   }
@@ -1103,17 +1086,59 @@
   .list-container {
     padding: 1.25rem;
   }
+}
 
-  .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-  }
+/* ============================================
+   HAMBURGER MENU & SIDEBAR TOGGLE
+   ============================================ */
+.sidebar-toggle {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1100;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border: none;
+  width: 45px;
+  height: 45px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s ease;
+}
 
-  .sidebar.active {
-    transform: translateX(0);
-  }
+.sidebar-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
 
-  .main-wrapper {
-    margin-left: 0;
-  }
+.sidebar-toggle span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: white;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+/* Sidebar Overlay */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

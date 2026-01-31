@@ -42,9 +42,9 @@ function validatePasswordStrength(password) {
   const hasLowerCase = /[a-z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
   const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-  
+
   const errors = [];
-  
+
   if (password.length < minLength) {
     errors.push(`Password must be at least ${minLength} characters long`);
   }
@@ -60,7 +60,7 @@ function validatePasswordStrength(password) {
   if (!hasSpecialChar) {
     errors.push('Password must contain at least one special character');
   }
-  
+
   return {
     isValid: errors.length === 0,
     errors
@@ -88,8 +88,21 @@ function validateEmail(email) {
  */
 exports.register = async (req, res) => {
   try {
-    const { full_name, email, password } = req.body;
-    
+    const {
+      full_name,
+      email,
+      password,
+      role, // Added role
+      studentId,
+      department,
+      batch,
+      gender,
+      date_of_birth,
+      address,
+      phone_number,
+      designation // Added designation
+    } = req.body;
+
     // Validate required fields
     if (!full_name || !email || !password) {
       return res.status(400).json({
@@ -97,7 +110,7 @@ exports.register = async (req, res) => {
         message: 'All fields are required (full_name, email, password)'
       });
     }
-    
+
     // Validate full name
     if (full_name.trim().length < 2) {
       return res.status(400).json({
@@ -105,7 +118,7 @@ exports.register = async (req, res) => {
         message: 'Full name must be at least 2 characters long'
       });
     }
-    
+
     // Validate email format
     if (!validateEmail(email)) {
       return res.status(400).json({
@@ -113,7 +126,7 @@ exports.register = async (req, res) => {
         message: 'Invalid email format'
       });
     }
-    
+
     // Validate password strength
     const passwordValidation = validatePasswordStrength(password);
     if (!passwordValidation.isValid) {
@@ -123,50 +136,67 @@ exports.register = async (req, res) => {
         errors: passwordValidation.errors
       });
     }
-    
+
     // Set role to 'pending' - admin will assign actual role after verification
     const userRole = 'pending';
-    
+
     // Check if email already exists
     const [existingUsers] = await db.query(
       'SELECT id FROM users WHERE email = ?',
       [email.toLowerCase()]
     );
-    
+
     if (existingUsers.length > 0) {
       return res.status(409).json({
         success: false,
         message: 'Email already registered'
       });
     }
-    
+
     // Hash password
     const saltRounds = 10;
     const password_hash = await bcrypt.hash(password, saltRounds);
-    
-    // Generate OTP
-    const otp = generateOTP();
-    const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60000);
-    
+
     // Insert new user
+    // We use the requested 'role' from body to decide which fields to save (studentId vs designation)
+    // But we save the user as 'pending' in the role column
     const [result] = await db.query(
-      'INSERT INTO users (full_name, email, password_hash, role, is_verified, otp, otp_expiry) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [full_name.trim(), email.toLowerCase(), password_hash, userRole, false, otp, otpExpiry]
+      `INSERT INTO users (
+        full_name, email, password_hash, role, is_verified, otp, otp_expiry,
+        studentId, department, batch, gender, date_of_birth, address, phone_number, designation
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        full_name.trim(),
+        email.toLowerCase(),
+        password_hash,
+        userRole, // Always set to pending initially
+        true,
+        null,
+        null,
+        role === 'student' ? studentId : null,
+        department || null,
+        role === 'student' ? batch : null,
+        gender || null,
+        date_of_birth || null,
+        address || null,
+        phone_number || null,
+        role === 'faculty' ? designation : null
+      ]
     );
-    
-    // Send OTP email
-    await sendOTPEmail(email, full_name, otp);
-    
+
+    // OTP Email disabled
+    // await sendOTPEmail(email, full_name, otp);
+
     res.status(201).json({
       success: true,
-      message: 'Registration successful! Please check your email for OTP verification code.',
+      message: 'Registration successful! You can now login.',
       data: {
         user_id: result.insertId,
         email: email.toLowerCase(),
-        requires_verification: true
+        requires_verification: false
       }
     });
-    
+
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({
@@ -188,7 +218,7 @@ exports.register = async (req, res) => {
 exports.verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
-    
+
     // Validate inputs
     if (!email || !otp) {
       return res.status(400).json({
@@ -196,22 +226,22 @@ exports.verifyOTP = async (req, res) => {
         message: 'Email and OTP are required'
       });
     }
-    
+
     // Get user
     const [users] = await db.query(
       'SELECT * FROM users WHERE email = ?',
       [email.toLowerCase()]
     );
-    
+
     if (users.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-    
+
     const user = users[0];
-    
+
     // Check if already verified
     if (user.is_verified) {
       return res.status(400).json({
@@ -219,7 +249,7 @@ exports.verifyOTP = async (req, res) => {
         message: 'Account is already verified'
       });
     }
-    
+
     // Check OTP
     if (user.otp !== otp) {
       return res.status(400).json({
@@ -227,7 +257,7 @@ exports.verifyOTP = async (req, res) => {
         message: 'Invalid OTP code'
       });
     }
-    
+
     // Check OTP expiry
     if (new Date() > new Date(user.otp_expiry)) {
       return res.status(400).json({
@@ -235,24 +265,24 @@ exports.verifyOTP = async (req, res) => {
         message: 'OTP has expired. Please request a new one.'
       });
     }
-    
+
     // Mark user as verified
     await db.query(
       'UPDATE users SET is_verified = TRUE, otp = NULL, otp_expiry = NULL WHERE email = ?',
       [email.toLowerCase()]
     );
-    
+
     // Generate JWT token
     const token = jwt.sign(
-      { 
-        user_id: user.id, 
-        email: user.email, 
-        role: user.role 
+      {
+        user_id: user.id,
+        email: user.email,
+        role: user.role
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
-    
+
     res.json({
       success: true,
       message: 'Email verified successfully! You can now login.',
@@ -266,7 +296,7 @@ exports.verifyOTP = async (req, res) => {
         }
       }
     });
-    
+
   } catch (error) {
     console.error('OTP verification error:', error);
     res.status(500).json({
@@ -288,54 +318,54 @@ exports.verifyOTP = async (req, res) => {
 exports.resendOTP = async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     if (!email) {
       return res.status(400).json({
         success: false,
         message: 'Email is required'
       });
     }
-    
+
     // Get user
     const [users] = await db.query(
       'SELECT * FROM users WHERE email = ?',
       [email.toLowerCase()]
     );
-    
+
     if (users.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-    
+
     const user = users[0];
-    
+
     if (user.is_verified) {
       return res.status(400).json({
         success: false,
         message: 'Account is already verified'
       });
     }
-    
+
     // Generate new OTP
     const otp = generateOTP();
     const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60000);
-    
+
     // Update OTP
     await db.query(
       'UPDATE users SET otp = ?, otp_expiry = ? WHERE email = ?',
       [otp, otpExpiry, email.toLowerCase()]
     );
-    
+
     // Send OTP email
     await sendOTPEmail(email, user.full_name, otp);
-    
+
     res.json({
       success: true,
       message: 'New OTP sent to your email'
     });
-    
+
   } catch (error) {
     console.error('Resend OTP error:', error);
     res.status(500).json({
@@ -358,7 +388,7 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const ipAddress = req.ip || req.connection.remoteAddress;
-    
+
     // Validate inputs
     if (!email || !password) {
       return res.status(400).json({
@@ -366,28 +396,28 @@ exports.login = async (req, res) => {
         message: 'Email and password are required'
       });
     }
-    
+
     // Get user
     const [users] = await db.query(
       'SELECT * FROM users WHERE email = ?',
       [email.toLowerCase()]
     );
-    
+
     if (users.length === 0) {
       // Log failed attempt
       await db.query(
         'INSERT INTO login_attempts (email, ip_address, success) VALUES (?, ?, FALSE)',
         [email.toLowerCase(), ipAddress]
       );
-      
+
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
       });
     }
-    
+
     const user = users[0];
-    
+
     // Check account lockout
     if (user.account_locked_until && new Date() < new Date(user.account_locked_until)) {
       const minutesLeft = Math.ceil((new Date(user.account_locked_until) - new Date()) / 60000);
@@ -396,7 +426,7 @@ exports.login = async (req, res) => {
         message: `Account temporarily locked. Please try again in ${minutesLeft} minutes.`
       });
     }
-    
+
     // Check if user role is pending (not approved by admin yet)
     if (user.role === 'pending') {
       return res.status(403).json({
@@ -405,7 +435,7 @@ exports.login = async (req, res) => {
         requires_approval: true
       });
     }
-    
+
     // Check if email is verified
     if (!user.is_verified) {
       return res.status(403).json({
@@ -414,22 +444,22 @@ exports.login = async (req, res) => {
         requires_verification: true
       });
     }
-    
+
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-    
+
     if (!isPasswordValid) {
       // Increment failed attempts
       const newFailedAttempts = user.failed_login_attempts + 1;
       let lockUntil = null;
-      
+
       if (newFailedAttempts >= MAX_FAILED_ATTEMPTS) {
         lockUntil = new Date(Date.now() + LOCKOUT_DURATION_MINUTES * 60000);
         await db.query(
           'UPDATE users SET failed_login_attempts = ?, last_failed_login = NOW(), account_locked_until = ? WHERE email = ?',
           [newFailedAttempts, lockUntil, email.toLowerCase()]
         );
-        
+
         return res.status(423).json({
           success: false,
           message: `Too many failed attempts. Account locked for ${LOCKOUT_DURATION_MINUTES} minutes.`
@@ -440,44 +470,44 @@ exports.login = async (req, res) => {
           [newFailedAttempts, email.toLowerCase()]
         );
       }
-      
+
       // Log failed attempt
       await db.query(
         'INSERT INTO login_attempts (email, ip_address, success) VALUES (?, ?, FALSE)',
         [email.toLowerCase(), ipAddress]
       );
-      
+
       const attemptsLeft = MAX_FAILED_ATTEMPTS - newFailedAttempts;
       return res.status(401).json({
         success: false,
         message: `Invalid email or password. ${attemptsLeft} attempts remaining.`
       });
     }
-    
+
     // Reset failed attempts on successful login
     await db.query(
       'UPDATE users SET failed_login_attempts = 0, account_locked_until = NULL WHERE email = ?',
       [email.toLowerCase()]
     );
-    
+
     // Log successful attempt
     await db.query(
       'INSERT INTO login_attempts (email, ip_address, success) VALUES (?, ?, TRUE)',
       [email.toLowerCase(), ipAddress]
     );
-    
+
     // Generate JWT token
     const token = jwt.sign(
-      { 
-        user_id: user.id, 
-        email: user.email, 
+      {
+        user_id: user.id,
+        email: user.email,
         role: user.role,
         full_name: user.full_name
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
-    
+
     res.json({
       success: true,
       message: 'Login successful',
@@ -491,11 +521,15 @@ exports.login = async (req, res) => {
           department: user.department,
           designation: user.designation,
           batch: user.batch,
-          studentId: user.studentId
+          studentId: user.studentId,
+          phone_number: user.phone_number,
+          address: user.address,
+          gender: user.gender,
+          date_of_birth: user.date_of_birth
         }
       }
     });
-    
+
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({
@@ -517,20 +551,20 @@ exports.login = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     if (!email) {
       return res.status(400).json({
         success: false,
         message: 'Email is required'
       });
     }
-    
+
     // Get user
     const [users] = await db.query(
       'SELECT * FROM users WHERE email = ?',
       [email.toLowerCase()]
     );
-    
+
     // Always return success to prevent email enumeration
     if (users.length === 0) {
       return res.json({
@@ -538,27 +572,27 @@ exports.forgotPassword = async (req, res) => {
         message: 'If the email exists, a password reset link has been sent.'
       });
     }
-    
+
     const user = users[0];
-    
+
     // Generate secure reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpiry = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60000);
-    
+
     // Save reset token
     await db.query(
       'UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE email = ?',
       [resetToken, resetTokenExpiry, email.toLowerCase()]
     );
-    
+
     // Send password reset email
     await sendPasswordResetEmail(email, user.full_name, resetToken);
-    
+
     res.json({
       success: true,
       message: 'If the email exists, a password reset link has been sent.'
     });
-    
+
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({
@@ -580,14 +614,14 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   try {
     const { token, new_password } = req.body;
-    
+
     if (!token || !new_password) {
       return res.status(400).json({
         success: false,
         message: 'Token and new password are required'
       });
     }
-    
+
     // Validate new password strength
     const passwordValidation = validatePasswordStrength(new_password);
     if (!passwordValidation.isValid) {
@@ -597,22 +631,22 @@ exports.resetPassword = async (req, res) => {
         errors: passwordValidation.errors
       });
     }
-    
+
     // Get user by reset token
     const [users] = await db.query(
       'SELECT * FROM users WHERE reset_token = ?',
       [token]
     );
-    
+
     if (users.length === 0) {
       return res.status(400).json({
         success: false,
         message: 'Invalid or expired reset token'
       });
     }
-    
+
     const user = users[0];
-    
+
     // Check token expiry
     if (new Date() > new Date(user.reset_token_expiry)) {
       return res.status(400).json({
@@ -620,22 +654,22 @@ exports.resetPassword = async (req, res) => {
         message: 'Reset token has expired. Please request a new one.'
       });
     }
-    
+
     // Hash new password
     const saltRounds = 10;
     const password_hash = await bcrypt.hash(new_password, saltRounds);
-    
+
     // Update password and clear reset token
     await db.query(
       'UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL, failed_login_attempts = 0 WHERE id = ?',
       [password_hash, user.id]
     );
-    
+
     res.json({
       success: true,
       message: 'Password reset successful. You can now login with your new password.'
     });
-    
+
   } catch (error) {
     console.error('Reset password error:', error);
     res.status(500).json({
@@ -657,26 +691,28 @@ exports.getCurrentUser = async (req, res) => {
   try {
     // User info is attached by auth middleware
     const userId = req.user.user_id;
-    
+
     const [users] = await db.query(
-      'SELECT id, full_name, email, role, is_verified, created_at FROM users WHERE id = ?',
+      `SELECT id, full_name, email, role, is_verified, created_at, 
+      studentId, department, batch, gender, date_of_birth, address, phone_number, designation
+      FROM users WHERE id = ?`,
       [userId]
     );
-    
+
     if (users.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-    
+
     res.json({
       success: true,
       data: {
         user: users[0]
       }
     });
-    
+
   } catch (error) {
     console.error('Get current user error:', error);
     res.status(500).json({
@@ -713,9 +749,11 @@ exports.logout = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const [users] = await db.query(
-      'SELECT id, full_name, email, role, is_verified, created_at FROM users ORDER BY created_at DESC'
+      `SELECT id, full_name, email, role, is_verified, created_at, 
+      studentId, department, batch, phone_number 
+      FROM users ORDER BY created_at DESC`
     );
-    
+
     res.json({
       success: true,
       users
@@ -742,7 +780,7 @@ exports.updateUserRole = async (req, res) => {
   try {
     const { userId } = req.params;
     const { role } = req.body;
-    
+
     // Validate role
     const validRoles = ['admin', 'student', 'faculty', 'pending'];
     if (!role || !validRoles.includes(role)) {
@@ -751,20 +789,20 @@ exports.updateUserRole = async (req, res) => {
         message: 'Invalid role. Must be: admin, student, faculty, or pending'
       });
     }
-    
+
     // Update user role
     const [result] = await db.query(
       'UPDATE users SET role = ? WHERE id = ?',
       [role, userId]
     );
-    
+
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-    
+
     res.json({
       success: true,
       message: 'User role updated successfully'
@@ -774,6 +812,70 @@ exports.updateUserRole = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating user role'
+    });
+  }
+};
+
+// ======================================================
+// UPDATE USER PROFILE
+// ======================================================
+
+/**
+ * Update current user profile
+ * PUT /api/auth/profile
+ * Body: { phone_number, address, gender, date_of_birth }
+ */
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+    const { phone_number, address, gender, date_of_birth } = req.body;
+
+    // Build update query dynamically
+    let updateFields = [];
+    let params = [];
+
+    if (phone_number !== undefined) {
+      updateFields.push('phone_number = ?');
+      params.push(phone_number);
+    }
+    if (address !== undefined) {
+      updateFields.push('address = ?');
+      params.push(address);
+    }
+    if (gender !== undefined) {
+      updateFields.push('gender = ?');
+      params.push(gender);
+    }
+    if (date_of_birth !== undefined) {
+      updateFields.push('date_of_birth = ?');
+      params.push(date_of_birth);
+    }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No fields to update'
+      });
+    }
+
+    // Add userId to params
+    params.push(userId);
+
+    const [result] = await db.query(
+      `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`,
+      params
+    );
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update profile'
     });
   }
 };
