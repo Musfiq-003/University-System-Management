@@ -24,10 +24,12 @@ function AddResearchPaper({ userRole }) {
     setMessage({ text: '', type: '' });
 
     try {
+      const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/research-papers', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(formData),
       });
@@ -64,7 +66,7 @@ function AddResearchPaper({ userRole }) {
             {message.text}
           </div>
         )}
-        
+
         <div className="form-group">
           <label>Paper Title *</label>
           <input

@@ -1,12 +1,14 @@
 const db = require('../config/db');
+const response = require('../utils/responseHandler');
 
 // Get all courses
 exports.getAllCourses = async (req, res) => {
     try {
         const [courses] = await db.query('SELECT * FROM courses ORDER BY course_code');
-        res.json({ success: true, data: courses });
+        return response.success(res, 'Courses fetched successfully', courses);
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error('Error fetching courses:', error);
+        return response.error(res, error, 500);
     }
 };
 
@@ -16,7 +18,7 @@ exports.createCourse = async (req, res) => {
         const { course_code, title, credit, department } = req.body;
         // Validate
         if (!course_code || !title || !credit) {
-            return res.status(400).json({ success: false, message: 'Missing required fields' });
+            return response.error(res, 'Missing required fields (course_code, title, credit)', 400);
         }
 
         await db.query(
@@ -24,12 +26,13 @@ exports.createCourse = async (req, res) => {
             [course_code, title, credit, department]
         );
 
-        res.json({ success: true, message: 'Course created successfully' });
+        return response.success(res, 'Course created successfully', { course_code, title, credit, department }, 201);
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') {
-            return res.status(400).json({ success: false, message: 'Course code already exists' });
+            return response.error(res, 'Course code already exists', 400);
         }
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error('Error creating course:', error);
+        return response.error(res, error, 500);
     }
 };
 
@@ -44,9 +47,10 @@ exports.updateCourse = async (req, res) => {
             [title, credit, department, id]
         );
 
-        res.json({ success: true, message: 'Course updated successfully' });
+        return response.success(res, 'Course updated successfully');
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error('Error updating course:', error);
+        return response.error(res, error, 500);
     }
 };
 
@@ -54,9 +58,15 @@ exports.updateCourse = async (req, res) => {
 exports.deleteCourse = async (req, res) => {
     try {
         const { id } = req.params;
-        await db.query('DELETE FROM courses WHERE id = ?', [id]);
-        res.json({ success: true, message: 'Course deleted successfully' });
+        const [result] = await db.query('DELETE FROM courses WHERE id = ?', [id]);
+
+        if (result.affectedRows === 0) {
+            return response.error(res, 'Course not found', 404);
+        }
+
+        return response.success(res, 'Course deleted successfully');
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error('Error deleting course:', error);
+        return response.error(res, error, 500);
     }
 };

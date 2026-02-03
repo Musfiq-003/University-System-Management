@@ -1,6 +1,7 @@
 // Controller for Routine Management
 // Handles all business logic for class routines
 const db = require('../config/db');
+const response = require('../utils/responseHandler');
 
 /**
  * Add a new class session (Single Routine Entry)
@@ -22,10 +23,7 @@ exports.addRoutine = async (req, res) => {
 
     // Validate required fields
     if (!department || !batch || !course || !teacher || !day || !start_time || !end_time || !room_number) {
-      return res.status(400).json({
-        success: false,
-        message: 'All fields are required: department, batch, course, teacher, day, start_time, end_time, room_number'
-      });
+      return response.error(res, 'All fields are required: department, batch, course, teacher, day, start_time, end_time, room_number', 400);
     }
 
     // Insert routine into database
@@ -37,41 +35,37 @@ exports.addRoutine = async (req, res) => {
     );
 
     // Return success response with the new routine ID
-    res.status(201).json({
-      success: true,
-      message: 'Class routine added successfully',
-      data: {
-        id: result.insertId,
-        department,
-        batch,
-        course,
-        teacher,
-        day,
-        start_time,
-        end_time,
-        room_number
-      }
-    });
+    return response.success(res, 'Class routine added successfully', {
+      id: result.insertId,
+      department,
+      batch,
+      course,
+      teacher,
+      day,
+      start_time,
+      end_time,
+      room_number
+    }, 201);
   } catch (error) {
     console.error('Error adding routine:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to add routine',
-      error: error.message
-    });
+    return response.error(res, error, 500);
   }
 };
 
 /**
- * Get all routines - Flat list sorted by Day and Time
+ * Get all routines with pagination, filtering and search
  * @route GET /api/routines
- * @query department - Filter by department
- * @query batch - Filter by batch
+ * @query page, limit, department, batch, course, teacher
  */
 exports.getAllRoutines = async (req, res) => {
   try {
-    // Filter parameters
-    const { department, batch } = req.query;
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    // Filter and search parameters
+    const { department, batch, course, teacher } = req.query;
 
     // Build dynamic query
     let whereClause = [];
@@ -85,31 +79,40 @@ exports.getAllRoutines = async (req, res) => {
       whereClause.push('batch = ?');
       params.push(batch);
     }
+    if (course) {
+      whereClause.push('course LIKE ?');
+      params.push(`%${course}%`);
+    }
+    if (teacher) {
+      whereClause.push('teacher LIKE ?');
+      params.push(`%${teacher}%`);
+    }
 
     const whereSQL = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
 
+    // Get total count for pagination
+    const [countResult] = await db.query(
+      `SELECT COUNT(*) as total FROM routines ${whereSQL}`,
+      params
+    );
+    const totalItems = countResult[0].total;
+
     // Query to fetch routines
-    // Sorting order: Custom Day order (Sat-Thu), then Start Time
+    // Sorting order: Custom Day order (Sat-Fri), then Start Time
     const [routines] = await db.query(
       `SELECT * FROM routines ${whereSQL} 
        ORDER BY 
        FIELD(day, 'Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'),
-       start_time`
+       start_time
+       LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
     );
 
-    // Return the list of routines
-    res.status(200).json({
-      success: true,
-      count: routines.length,
-      data: routines
-    });
+    // Return the paginated list of routines
+    return response.paginated(res, routines, page, limit, totalItems);
   } catch (error) {
     console.error('Error fetching routines:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch routines',
-      error: error.message
-    });
+    return response.error(res, error, 500);
   }
 };
 
@@ -125,26 +128,16 @@ exports.deleteRoutine = async (req, res) => {
     const [existing] = await db.query('SELECT id FROM routines WHERE id = ?', [id]);
 
     if (existing.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Routine not found'
-      });
+      return response.error(res, 'Routine not found', 404);
     }
 
     // Delete the routine
     await db.query('DELETE FROM routines WHERE id = ?', [id]);
 
-    res.status(200).json({
-      success: true,
-      message: 'Routine deleted successfully'
-    });
+    return response.success(res, 'Routine deleted successfully');
   } catch (error) {
     console.error('Error deleting routine:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete routine',
-      error: error.message
-    });
+    return response.error(res, error, 500);
   }
 };
 
@@ -163,10 +156,7 @@ exports.updateRoutine = async (req, res) => {
     const [existing] = await db.query('SELECT id FROM routines WHERE id = ?', [id]);
 
     if (existing.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Routine not found'
-      });
+      return response.error(res, 'Routine not found', 404);
     }
 
     // Update routine
@@ -184,17 +174,10 @@ exports.updateRoutine = async (req, res) => {
       [department, batch, course, teacher, day, start_time, end_time, room_number, id]
     );
 
-    res.status(200).json({
-      success: true,
-      message: 'Routine updated successfully'
-    });
+    return response.success(res, 'Routine updated successfully');
   } catch (error) {
     console.error('Error updating routine:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update routine',
-      error: error.message
-    });
+    return response.error(res, error, 500);
   }
 };
 
@@ -212,18 +195,9 @@ exports.getRoutinesByDay = async (req, res) => {
       [day]
     );
 
-    res.status(200).json({
-      success: true,
-      day: day,
-      count: routines.length,
-      data: routines
-    });
+    return response.success(res, `Routines for ${day} fetched successfully`, routines);
   } catch (error) {
     console.error('Error fetching routines by day:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch routines',
-      error: error.message
-    });
+    return response.error(res, error, 500);
   }
 };

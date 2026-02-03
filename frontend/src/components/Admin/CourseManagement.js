@@ -13,7 +13,7 @@ function CourseManagement() {
     const fetchCourses = async () => {
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch('http://localhost:3000/api/admin/courses', {
+            const res = await fetch('/api/admin/courses', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -31,7 +31,7 @@ function CourseManagement() {
         e.preventDefault();
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch('http://localhost:3000/api/admin/courses', {
+            const res = await fetch('/api/admin/courses', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -56,7 +56,7 @@ function CourseManagement() {
         if (!window.confirm('Delete this course?')) return;
         try {
             const token = localStorage.getItem('auth_token');
-            await fetch(`http://localhost:3000/api/admin/courses/${id}`, {
+            await fetch(`/api/admin/courses/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

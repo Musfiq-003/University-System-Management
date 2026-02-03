@@ -1,11 +1,12 @@
 const db = require('../config/db');
+const response = require('../utils/responseHandler');
 
 // Get Academic Stats (CGPA, Credits) & Hostel Status
 exports.getStats = async (req, res) => {
   try {
     const studentId = req.user.studentId;
     if (!studentId) {
-      return res.status(400).json({ success: false, message: 'Student ID not found' });
+      return response.error(res, 'Student ID not found in session', 400);
     }
 
     // Fetch Results
@@ -14,24 +15,21 @@ exports.getStats = async (req, res) => {
       [studentId]
     );
 
-    // Fetch Hostel
+    // Fetch Hostel - Using regularized table name hostel_allocations
     const [hostel] = await db.query(
       'SELECT status FROM hostel_allocations WHERE student_id = ? AND status = "Allocated"',
       [studentId]
     );
 
-    res.json({
-      success: true,
-      data: {
-        cgpa: results[0] ? results[0].cgpa : 0.00,
-        creditsCompleted: results[0] ? results[0].credits_completed : 0,
-        hostelStatus: hostel.length > 0 ? 'Allocated' : 'Not Allocated'
-      }
+    return response.success(res, 'Stats fetched successfully', {
+      cgpa: results[0] ? parseFloat(results[0].cgpa) : 0.00,
+      creditsCompleted: results[0] ? parseFloat(results[0].credits_completed) : 0,
+      hostelStatus: hostel.length > 0 ? 'Allocated' : 'Not Allocated'
     });
 
   } catch (error) {
     console.error('Error fetching stats:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    return response.error(res, error, 500);
   }
 };
 
@@ -39,7 +37,7 @@ exports.getStats = async (req, res) => {
 exports.getAccountInfo = async (req, res) => {
   try {
     const studentId = req.user.studentId;
-    if (!studentId) return res.status(400).json({ success: false, message: 'Student ID not found' });
+    if (!studentId) return response.error(res, 'Student ID not found in session', 400);
 
     // 1. Get Summary
     const [accounts] = await db.query(
@@ -53,17 +51,14 @@ exports.getAccountInfo = async (req, res) => {
       [studentId]
     );
 
-    res.json({
-      success: true,
-      data: {
-        summary: accounts[0] || { payable: 0, paid: 0, due: 0 },
-        history: history
-      }
+    return response.success(res, 'Account info fetched successfully', {
+      summary: accounts[0] || { payable: 0, paid: 0, due: 0 },
+      history: history
     });
 
   } catch (error) {
     console.error('Error fetching accounts:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    return response.error(res, error, 500);
   }
 };
 
@@ -71,7 +66,7 @@ exports.getAccountInfo = async (req, res) => {
 exports.getActiveCourses = async (req, res) => {
   try {
     const studentId = req.user.studentId;
-    if (!studentId) return res.status(400).json({ success: false, message: 'Student ID not found' });
+    if (!studentId) return response.error(res, 'Student ID not found in session', 400);
 
     const query = `
             SELECT c.course_code as code, c.title, c.credit 
@@ -81,14 +76,11 @@ exports.getActiveCourses = async (req, res) => {
         `;
     const [courses] = await db.query(query, [studentId]);
 
-    res.json({
-      success: true,
-      data: courses
-    });
+    return response.success(res, 'Active courses fetched successfully', courses);
 
   } catch (error) {
     console.error('Error fetching courses:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    return response.error(res, error, 500);
   }
 };
 
@@ -100,13 +92,10 @@ exports.getNotices = async (req, res) => {
       'SELECT id, title, content, DATE_FORMAT(publish_date, "%d") as date, DATE_FORMAT(publish_date, "%b") as month FROM notices ORDER BY publish_date DESC LIMIT 5'
     );
 
-    res.json({
-      success: true,
-      data: notices
-    });
+    return response.success(res, 'Latest notices fetched successfully', notices);
 
   } catch (error) {
     console.error('Error fetching notices:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    return response.error(res, error, 500);
   }
 };

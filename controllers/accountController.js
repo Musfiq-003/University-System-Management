@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const response = require('../utils/responseHandler');
 
 // Get student accounts (filter by ID)
 exports.getAccounts = async (req, res) => {
@@ -13,9 +14,10 @@ exports.getAccounts = async (req, res) => {
         }
 
         const [accounts] = await db.query(query, params);
-        res.json({ success: true, data: accounts });
+        return response.success(res, 'Student accounts fetched successfully', accounts);
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error('Error fetching accounts:', error);
+        return response.error(res, error, 500);
     }
 };
 
@@ -25,7 +27,7 @@ exports.updateAccount = async (req, res) => {
         const { studentId, payable, paid } = req.body;
 
         if (!studentId) {
-            return res.status(400).json({ success: false, message: 'Student ID required' });
+            return response.error(res, 'Student ID required', 400);
         }
 
         await db.query(
@@ -35,9 +37,10 @@ exports.updateAccount = async (req, res) => {
             [studentId, payable || 0, paid || 0]
         );
 
-        res.json({ success: true, message: 'Account Record updated' });
+        return response.success(res, 'Account record updated successfully');
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error('Error updating account:', error);
+        return response.error(res, error, 500);
     }
 };
 
@@ -49,10 +52,10 @@ exports.getPaymentHistory = async (req, res) => {
             'SELECT * FROM payment_history WHERE studentId = ? ORDER BY payment_date DESC',
             [studentId]
         );
-        res.json({ success: true, data: history });
+        return response.success(res, 'Payment history fetched successfully', history);
     } catch (error) {
         console.error('Error fetching payment history:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        return response.error(res, error, 500);
     }
 };
 
@@ -62,7 +65,7 @@ exports.addPaymentRecord = async (req, res) => {
         const { studentId, amount, payment_reason, payment_method, transaction_reference, remarks, status } = req.body;
 
         if (!studentId || !amount || !payment_reason) {
-            return res.status(400).json({ success: false, message: 'Student ID, Amount and Reason are required' });
+            return response.error(res, 'Student ID, Amount and Reason are required', 400);
         }
 
         // 1. Insert into payment_history
@@ -82,10 +85,10 @@ exports.addPaymentRecord = async (req, res) => {
             );
         }
 
-        res.json({ success: true, message: 'Payment recorded successfully' });
+        return response.success(res, 'Payment recorded successfully');
     } catch (error) {
         console.error('Error adding payment record:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        return response.error(res, error, 500);
     }
 };
 
@@ -117,14 +120,13 @@ exports.getMyAccounts = async (req, res) => {
             [studentId]
         );
 
-        res.json({
-            success: true,
+        return response.success(res, 'My account details fetched successfully', {
             summary: accountSummary,
             history: history
         });
 
     } catch (error) {
         console.error('Error fetching my accounts:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        return response.error(res, error, 500);
     }
 };

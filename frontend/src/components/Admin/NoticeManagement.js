@@ -12,7 +12,7 @@ function NoticeManagement() {
     const fetchNotices = async () => {
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch('http://localhost:3000/api/admin/notices', {
+            const res = await fetch('/api/admin/notices', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -26,7 +26,7 @@ function NoticeManagement() {
         e.preventDefault();
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch('http://localhost:3000/api/admin/notices', {
+            const res = await fetch('/api/admin/notices', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(formData)
@@ -46,7 +46,7 @@ function NoticeManagement() {
         if (!window.confirm('Delete this notice?')) return;
         try {
             const token = localStorage.getItem('auth_token');
-            await fetch(`http://localhost:3000/api/admin/notices/${id}`, {
+            await fetch(`/api/admin/notices/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

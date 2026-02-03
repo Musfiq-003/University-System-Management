@@ -12,11 +12,13 @@ USE university_management;
 -- Drop existing tables in correct order (respecting foreign keys)
 DROP TABLE IF EXISTS activity_logs;
 DROP TABLE IF EXISTS login_attempts;
-DROP TABLE IF EXISTS hostel_students;
+DROP TABLE IF EXISTS hostel_allocations;
 DROP TABLE IF EXISTS research_papers;
 DROP TABLE IF EXISTS routines;
 DROP TABLE IF EXISTS teachers;
 DROP TABLE IF EXISTS departments;
+DROP TABLE IF EXISTS enrollments;
+DROP TABLE IF EXISTS courses;
 DROP TABLE IF EXISTS users;
 
 -- ======================================================
@@ -119,6 +121,36 @@ CREATE TABLE routines (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ======================================================
+-- COURSES TABLE
+-- ======================================================
+CREATE TABLE courses (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  course_code VARCHAR(20) NOT NULL UNIQUE,
+  title VARCHAR(255) NOT NULL,
+  credit DECIMAL(3,1) NOT NULL,
+  department VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_course_code (course_code),
+  INDEX idx_department (department)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ======================================================
+-- ENROLLMENTS TABLE
+-- ======================================================
+CREATE TABLE enrollments (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  studentId VARCHAR(50) NOT NULL,
+  course_code VARCHAR(20) NOT NULL,
+  semester VARCHAR(20) NOT NULL,
+  status ENUM('active', 'completed', 'dropped') DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_student_enrollment (studentId),
+  INDEX idx_course_enrollment (course_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ======================================================
 -- RESEARCH PAPERS TABLE
 -- ======================================================
 CREATE TABLE research_papers (
@@ -131,18 +163,21 @@ CREATE TABLE research_papers (
   abstract TEXT NULL,
   keywords TEXT NULL,
   file_path VARCHAR(255) NULL,
+  user_id INT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_department (department),
   INDEX idx_year (year),
   INDEX idx_status (status),
-  INDEX idx_author (author)
+  INDEX idx_author (author),
+  INDEX idx_user_id (user_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ======================================================
--- HOSTEL STUDENTS TABLE
+-- HOSTEL ALLOCATIONS TABLE
 -- ======================================================
-CREATE TABLE hostel_students (
+CREATE TABLE hostel_allocations (
   id INT PRIMARY KEY AUTO_INCREMENT,
   student_name VARCHAR(100) NOT NULL,
   student_id VARCHAR(50) NOT NULL UNIQUE,
@@ -152,7 +187,7 @@ CREATE TABLE hostel_students (
   allocated_date DATE NOT NULL,
   check_in_date DATE NULL,
   check_out_date DATE NULL,
-  status ENUM('Active', 'Inactive', 'Transferred') DEFAULT 'Active',
+  status ENUM('Active', 'Inactive', 'Transferred', 'Allocated') DEFAULT 'Allocated',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_hostel (hostel_name),
@@ -281,10 +316,24 @@ INSERT INTO research_papers (title, author, department, year, status, abstract) 
 ('Climate Change Impact Analysis', 'Dr. Emily White', 'Environmental Science', 2024, 'Draft', 'An in-depth analysis of climate change effects on ecosystems.');
 
 -- Insert sample hostel students
-INSERT INTO hostel_students (student_name, student_id, hostel_name, room_number, department, allocated_date, status) VALUES
-('Ahmed Hassan', 'CS2024001', 'North Hall', '101', 'Computer Science & Engineering', '2024-01-15', 'Active'),
-('Fatima Rahman', 'CS2024002', 'South Hall', '205', 'Computer Science & Engineering', '2024-01-16', 'Active'),
-('Karim Abdullah', 'EEE2024001', 'East Hall', '310', 'Electrical & Electronic Engineering', '2024-01-17', 'Active');
+INSERT INTO hostel_allocations (student_name, student_id, hostel_name, room_number, department, allocated_date, status) VALUES
+('Ahmed Hassan', 'CS2024001', 'North Hall', '101', 'Computer Science & Engineering', '2024-01-15', 'Allocated'),
+('Fatima Rahman', 'CS2024002', 'South Hall', '205', 'Computer Science & Engineering', '2024-01-16', 'Allocated'),
+('Karim Abdullah', 'EEE2024001', 'East Hall', '310', 'Electrical & Electronic Engineering', '2024-01-17', 'Allocated');
+
+-- Insert sample courses
+INSERT INTO courses (course_code, title, credit, department) VALUES
+('CSE-311', 'Database Management Systems', 3.0, 'Computer Science & Engineering'),
+('CSE-312', 'Database Management Systems Lab', 1.0, 'Computer Science & Engineering'),
+('CSE-321', 'Web Development', 3.0, 'Computer Science & Engineering'),
+('CSE-211', 'Data Structures', 3.0, 'Computer Science & Engineering'),
+('CSE-212', 'Data Structures Lab', 1.0, 'Computer Science & Engineering');
+
+-- Insert sample enrollments
+INSERT INTO enrollments (studentId, course_code, semester, status) VALUES
+('CS2024001', 'CSE-311', 'Spring 2024', 'active'),
+('CS2024001', 'CSE-312', 'Spring 2024', 'active'),
+('CS2024001', 'CSE-321', 'Spring 2024', 'active');
 
 -- ======================================================
 -- USEFUL VIEWS FOR REPORTING
@@ -329,7 +378,7 @@ BEGIN
   SELECT 
     (SELECT COUNT(*) FROM routines WHERE department = u.department) as routine_count,
     (SELECT COUNT(*) FROM research_papers WHERE department = u.department) as paper_count,
-    (SELECT COUNT(*) FROM hostel_students WHERE department = u.department) as hostel_count,
+    (SELECT COUNT(*) FROM hostel_allocations WHERE department = u.department) as hostel_count,
     (SELECT COUNT(*) FROM activity_logs WHERE user_id = p_user_id) as activity_count
   FROM users u
   WHERE u.id = p_user_id;

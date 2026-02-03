@@ -21,7 +21,7 @@ function Settings() {
         try {
             const token = localStorage.getItem('auth_token');
             // We use /me endpoint to get current user data
-            const response = await fetch('http://localhost:3000/api/auth/me', {
+            const response = await fetch('/api/auth/me', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -61,7 +61,7 @@ function Settings() {
 
         try {
             const token = localStorage.getItem('auth_token');
-            const response = await fetch('http://localhost:3000/api/auth/profile', {
+            const response = await fetch('/api/auth/profile', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

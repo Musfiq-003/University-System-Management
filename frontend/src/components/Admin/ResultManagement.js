@@ -12,7 +12,7 @@ function ResultManagement() {
         try {
             const token = localStorage.getItem('auth_token');
             // Using search API for results which returns array, we take first match or empty
-            const res = await fetch(`http://localhost:3000/api/admin/results?studentId=${searchId}`, {
+            const res = await fetch(`/api/admin/results?studentId=${searchId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -36,7 +36,7 @@ function ResultManagement() {
         e.preventDefault();
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch('http://localhost:3000/api/admin/results', {
+            const res = await fetch('/api/admin/results', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({

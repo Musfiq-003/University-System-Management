@@ -20,16 +20,16 @@ function UserManagement() {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://localhost:3000/api/auth/users', {
+      const response = await fetch('/api/auth/users', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
-        setUsers(data.users);
+        setUsers(data.data);
       } else {
         setAlert({ show: true, message: data.message, type: 'error' });
       }
@@ -45,8 +45,8 @@ function UserManagement() {
     try {
       setUpdatingUserId(userId);
       const token = localStorage.getItem('auth_token');
-      
-      const response = await fetch(`http://localhost:3000/api/auth/users/${userId}/role`, {
+
+      const response = await fetch(`/api/auth/users/${userId}/role`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -56,7 +56,7 @@ function UserManagement() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setAlert({ show: true, message: 'User role updated successfully!', type: 'success' });
         fetchUsers(); // Refresh the list
@@ -72,7 +72,7 @@ function UserManagement() {
   };
 
   const getRoleBadgeClass = (role) => {
-    switch(role) {
+    switch (role) {
       case 'admin': return 'badge-admin';
       case 'faculty': return 'badge-faculty';
       case 'student': return 'badge-student';

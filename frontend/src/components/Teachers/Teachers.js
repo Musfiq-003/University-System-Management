@@ -20,14 +20,14 @@ function Teachers() {
   const fetchDepartments = async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://localhost:3000/api/departments', {
+      const response = await fetch('/api/departments', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       const data = await response.json();
       if (data.success) {
-        setDepartments(data.departments);
+        setDepartments(data.data);
       }
     } catch (error) {
       console.error('Error fetching departments:', error);
@@ -38,14 +38,14 @@ function Teachers() {
     setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`http://localhost:3000/api/teachers?department=${department}`, {
+      const response = await fetch(`/api/teachers?department=${department}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       const data = await response.json();
       if (data.success) {
-        setTeachers(data.teachers);
+        setTeachers(data.data);
       }
     } catch (error) {
       console.error('Error fetching teachers:', error);
@@ -61,23 +61,23 @@ function Teachers() {
 
   const extractRole = (designation) => {
     const lowerDesignation = designation.toLowerCase();
-    
+
     // Check for Dean first (highest priority)
     if (lowerDesignation.includes('dean')) return 'Dean';
-    
+
     // Check for Chairman/Chairperson
     if (lowerDesignation.includes('chairman') || lowerDesignation.includes('chairperson')) return 'Chairman';
-    
+
     // Check for Professor roles
     if (lowerDesignation.includes('professor')) {
       if (lowerDesignation.includes('associate')) return 'Associate Professor';
       if (lowerDesignation.includes('assistant')) return 'Assistant Professor';
       return 'Professor';
     }
-    
+
     // Check for Lecturer
     if (lowerDesignation.includes('lecturer')) return 'Lecturer';
-    
+
     // Default to Lecturer
     return 'Lecturer';
   };
@@ -104,7 +104,7 @@ function Teachers() {
     });
 
   const getRoleColor = (role) => {
-    switch(role) {
+    switch (role) {
       case 'Dean': return '#7c3aed';
       case 'Professor': return '#ea580c';
       case 'Chairman': return '#dc2626';
@@ -210,7 +210,7 @@ function Teachers() {
           <div className="no-results-icon">🔍</div>
           <h3>No Faculty Members Found</h3>
           <p>
-            {searchTerm 
+            {searchTerm
               ? 'No faculty members match your search criteria. Try different keywords.'
               : `No faculty information available for ${departments.find(d => d.code === selectedDept)?.name || selectedDept} yet.`
             }

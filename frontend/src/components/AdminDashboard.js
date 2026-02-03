@@ -22,13 +22,13 @@ function AdminDashboard({ user }) {
     const fetchStats = async () => {
         try {
             const token = localStorage.getItem('auth_token');
-            const response = await fetch('http://localhost:3000/api/auth/users', {
+            const response = await fetch('/api/auth/users', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
 
             if (data.success) {
-                const users = data.users;
+                const users = data.data;
                 setStats({
                     totalUsers: users.length,
                     pendingUsers: users.filter(u => u.role === 'pending').length,

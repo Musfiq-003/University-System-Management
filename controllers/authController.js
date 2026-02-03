@@ -10,6 +10,7 @@ const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const { sendOTPEmail, sendPasswordResetEmail, generateOTP } = require('../services/emailService');
 const crypto = require('crypto');
+const response = require('../utils/responseHandler');
 
 // JWT Secret (use environment variable in production)
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -105,10 +106,7 @@ exports.register = async (req, res) => {
 
     // Validate required fields
     if (!full_name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'All fields are required (full_name, email, password)'
-      });
+      return response.error(res, 'All fields are required (full_name, email, password)', 400);
     }
 
     // Validate full name
@@ -121,20 +119,13 @@ exports.register = async (req, res) => {
 
     // Validate email format
     if (!validateEmail(email)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid email format'
-      });
+      return response.error(res, 'Invalid email format', 400);
     }
 
     // Validate password strength
     const passwordValidation = validatePasswordStrength(password);
     if (!passwordValidation.isValid) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password does not meet security requirements',
-        errors: passwordValidation.errors
-      });
+      return response.error(res, 'Password does not meet security requirements', 400, passwordValidation.errors);
     }
 
     // Set role to 'pending' - admin will assign actual role after verification
@@ -147,10 +138,7 @@ exports.register = async (req, res) => {
     );
 
     if (existingUsers.length > 0) {
-      return res.status(409).json({
-        success: false,
-        message: 'Email already registered'
-      });
+      return response.error(res, 'Email already registered', 409);
     }
 
     // Hash password
@@ -221,10 +209,7 @@ exports.verifyOTP = async (req, res) => {
 
     // Validate inputs
     if (!email || !otp) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email and OTP are required'
-      });
+      return response.error(res, 'Email and OTP are required', 400);
     }
 
     // Get user
@@ -361,17 +346,11 @@ exports.resendOTP = async (req, res) => {
     // Send OTP email
     await sendOTPEmail(email, user.full_name, otp);
 
-    res.json({
-      success: true,
-      message: 'New OTP sent to your email'
-    });
+    return response.success(res, 'New OTP sent to your email');
 
   } catch (error) {
     console.error('Resend OTP error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to resend OTP'
-    });
+    return response.error(res, error, 500);
   }
 };
 
@@ -391,10 +370,7 @@ exports.login = async (req, res) => {
 
     // Validate inputs
     if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email and password are required'
-      });
+      return response.error(res, 'Email and password are required', 400);
     }
 
     // Get user
@@ -732,10 +708,7 @@ exports.getCurrentUser = async (req, res) => {
  */
 exports.logout = async (req, res) => {
   // With JWT, logout is handled on client side by deleting token
-  res.json({
-    success: true,
-    message: 'Logout successful'
-  });
+  return response.success(res, 'Logout successful');
 };
 
 // ======================================================
@@ -754,16 +727,10 @@ exports.getAllUsers = async (req, res) => {
       FROM users ORDER BY created_at DESC`
     );
 
-    res.json({
-      success: true,
-      users
-    });
+    return response.success(res, 'Users fetched successfully', users);
   } catch (error) {
     console.error('Get all users error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error retrieving users'
-    });
+    return response.error(res, error, 500);
   }
 };
 
@@ -784,10 +751,7 @@ exports.updateUserRole = async (req, res) => {
     // Validate role
     const validRoles = ['admin', 'student', 'faculty', 'pending'];
     if (!role || !validRoles.includes(role)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid role. Must be: admin, student, faculty, or pending'
-      });
+      return response.error(res, 'Invalid role. Must be: admin, student, faculty, or pending', 400);
     }
 
     // Update user role
@@ -797,22 +761,13 @@ exports.updateUserRole = async (req, res) => {
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      return response.error(res, 'User not found', 404);
     }
 
-    res.json({
-      success: true,
-      message: 'User role updated successfully'
-    });
+    return response.success(res, 'User role updated successfully');
   } catch (error) {
     console.error('Update user role error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error updating user role'
-    });
+    return response.error(res, error, 500);
   }
 };
 
@@ -852,10 +807,7 @@ exports.updateProfile = async (req, res) => {
     }
 
     if (updateFields.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No fields to update'
-      });
+      return response.error(res, 'No fields to update', 400);
     }
 
     // Add userId to params
@@ -866,16 +818,10 @@ exports.updateProfile = async (req, res) => {
       params
     );
 
-    res.json({
-      success: true,
-      message: 'Profile updated successfully'
-    });
+    return response.success(res, 'Profile updated successfully');
 
   } catch (error) {
     console.error('Update profile error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update profile'
-    });
+    return response.error(res, error, 500);
   }
 };

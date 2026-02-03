@@ -14,26 +14,25 @@ function ResearchPaperList({ userRole, userName }) {
     setError('');
     try {
       let url = '/api/research-papers';
-      
+
       if (filterStatus !== 'All') {
         url = `/api/research-papers/status/${filterStatus}`;
       } else if (searchDept.trim()) {
         url = `/api/research-papers/department/${searchDept.trim()}`;
       }
-      
-      const response = await fetch(url);
+
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const data = await response.json();
 
       if (data.success) {
-        // Filter papers by current user if not admin
-        if (userRole !== 'admin' && userName) {
-          const userPapers = data.data.filter(paper => paper.author === userName);
-          setPapers(userPapers);
-        } else {
-          setPapers(data.data);
-        }
+        setPapers(data.data);
       } else {
-        setError('Failed to fetch research papers');
+        setError(data.message || 'Failed to fetch research papers');
       }
     } catch (error) {
       setError('Error connecting to server');
@@ -51,10 +50,12 @@ function ResearchPaperList({ userRole, userName }) {
 
   const handleStatusUpdate = async (id) => {
     try {
+      const token = localStorage.getItem('auth_token');
       const response = await fetch(`/api/research-papers/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ status: newStatus }),
       });
@@ -92,7 +93,7 @@ function ResearchPaperList({ userRole, userName }) {
     <div className="list-container">
       <div className="list-header">
         <h2>{userRole === 'admin' ? 'All Research Papers' : 'My Research Papers'}</h2>
-        
+
         {/* Show submitted paper count for students and faculty */}
         {userRole !== 'admin' && (
           <div className="info-box" style={{ marginBottom: '20px', padding: '20px', background: 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
@@ -118,7 +119,7 @@ function ResearchPaperList({ userRole, userName }) {
             )}
           </div>
         )}
-        
+
         {/* Only show filters for admin */}
         {userRole === 'admin' && (
           <div className="filter-controls">
@@ -143,7 +144,7 @@ function ResearchPaperList({ userRole, userName }) {
                 onChange={(e) => setSearchDept(e.target.value)}
                 placeholder="Enter department"
               />
-              <button 
+              <button
                 className="btn btn-secondary"
                 onClick={() => {
                   setFilterStatus('All');
@@ -163,8 +164,8 @@ function ResearchPaperList({ userRole, userName }) {
         <div className="error-message">{error}</div>
       ) : papers.length === 0 ? (
         <div className="no-data">
-          {userRole === 'admin' 
-            ? 'No research papers found.' 
+          {userRole === 'admin'
+            ? 'No research papers found.'
             : 'You have not submitted any research papers yet.'}
         </div>
       ) : (
@@ -246,7 +247,7 @@ function ResearchPaperList({ userRole, userName }) {
           </table>
         </div>
       )}
-      
+
       <div className="list-footer">
         Total Papers: {papers.length}
       </div>

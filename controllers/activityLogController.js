@@ -5,6 +5,7 @@
 // ======================================================
 
 const db = require('../config/db');
+const response = require('../utils/responseHandler');
 
 /**
  * Log user activity
@@ -33,77 +34,53 @@ exports.logActivity = async (userId, action, entity, entityId = null, details = 
  */
 exports.getAllLogs = async (req, res) => {
   try {
-    const { page = 1, limit = 50, userId, action, entity } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const { userId, action, entity } = req.query;
     const offset = (page - 1) * limit;
 
     // Build query dynamically based on filters
-    let query = `
-      SELECT al.*, u.full_name as user_name, u.email as user_email, u.role as user_role
-      FROM activity_logs al
-      LEFT JOIN users u ON al.user_id = u.id
-      WHERE 1=1
-    `;
-    const params = [];
+    let whereConditions = ['1=1'];
+    let params = [];
 
     if (userId) {
-      query += ' AND al.user_id = ?';
+      whereConditions.push('al.user_id = ?');
       params.push(userId);
     }
 
     if (action) {
-      query += ' AND al.action = ?';
+      whereConditions.push('al.action = ?');
       params.push(action);
     }
 
     if (entity) {
-      query += ' AND al.entity = ?';
+      whereConditions.push('al.entity = ?');
       params.push(entity);
     }
 
-    query += ' ORDER BY al.created_at DESC LIMIT ? OFFSET ?';
-    params.push(parseInt(limit), parseInt(offset));
-
-    const [logs] = await db.query(query, params);
+    const whereClause = whereConditions.join(' AND ');
 
     // Get total count for pagination
-    let countQuery = 'SELECT COUNT(*) as total FROM activity_logs WHERE 1=1';
-    const countParams = [];
+    const [countResult] = await db.query(
+      `SELECT COUNT(*) as total FROM activity_logs al WHERE ${whereClause}`,
+      params
+    );
+    const totalItems = countResult[0].total;
 
-    if (userId) {
-      countQuery += ' AND user_id = ?';
-      countParams.push(userId);
-    }
+    // Query with pagination
+    const [logs] = await db.query(
+      `SELECT al.*, u.full_name as user_name, u.email as user_email, u.role as user_role
+      FROM activity_logs al
+      LEFT JOIN users u ON al.user_id = u.id
+      WHERE ${whereClause}
+      ORDER BY al.created_at DESC LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
 
-    if (action) {
-      countQuery += ' AND action = ?';
-      countParams.push(action);
-    }
-
-    if (entity) {
-      countQuery += ' AND entity = ?';
-      countParams.push(entity);
-    }
-
-    const [countResult] = await db.query(countQuery, countParams);
-    const total = countResult[0].total;
-
-    res.json({
-      success: true,
-      data: logs,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total: total,
-        totalPages: Math.ceil(total / limit)
-      }
-    });
+    return response.paginated(res, logs, page, limit, totalItems);
   } catch (error) {
     console.error('Error fetching activity logs:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch activity logs',
-      error: error.message
-    });
+    return response.error(res, error, 500);
   }
 };
 
@@ -114,41 +91,29 @@ exports.getAllLogs = async (req, res) => {
 exports.getMyLogs = async (req, res) => {
   try {
     const userId = req.user.user_id;
-    const { page = 1, limit = 20 } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
-
-    const [logs] = await db.query(
-      `SELECT * FROM activity_logs 
-       WHERE user_id = ? 
-       ORDER BY created_at DESC 
-       LIMIT ? OFFSET ?`,
-      [userId, parseInt(limit), parseInt(offset)]
-    );
 
     // Get total count
     const [countResult] = await db.query(
       'SELECT COUNT(*) as total FROM activity_logs WHERE user_id = ?',
       [userId]
     );
-    const total = countResult[0].total;
+    const totalItems = countResult[0].total;
 
-    res.json({
-      success: true,
-      data: logs,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total: total,
-        totalPages: Math.ceil(total / limit)
-      }
-    });
+    const [logs] = await db.query(
+      `SELECT * FROM activity_logs 
+       WHERE user_id = ? 
+       ORDER BY created_at DESC 
+       LIMIT ? OFFSET ?`,
+      [userId, limit, offset]
+    );
+
+    return response.paginated(res, logs, page, limit, totalItems);
   } catch (error) {
     console.error('Error fetching user activity logs:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch activity logs',
-      error: error.message
-    });
+    return response.error(res, error, 500);
   }
 };
 
@@ -158,7 +123,7 @@ exports.getMyLogs = async (req, res) => {
  */
 exports.getActivityStats = async (req, res) => {
   try {
-    const { days = 7 } = req.query;
+    const days = parseInt(req.query.days) || 7;
 
     // Activity by action type
     const [actionStats] = await db.query(
@@ -167,7 +132,7 @@ exports.getActivityStats = async (req, res) => {
        WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
        GROUP BY action 
        ORDER BY count DESC`,
-      [parseInt(days)]
+      [days]
     );
 
     // Activity by entity type
@@ -177,7 +142,7 @@ exports.getActivityStats = async (req, res) => {
        WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
        GROUP BY entity 
        ORDER BY count DESC`,
-      [parseInt(days)]
+      [days]
     );
 
     // Most active users
@@ -189,7 +154,7 @@ exports.getActivityStats = async (req, res) => {
        GROUP BY al.user_id, u.full_name, u.email, u.role
        ORDER BY activity_count DESC
        LIMIT 10`,
-      [parseInt(days)]
+      [days]
     );
 
     // Daily activity trend
@@ -199,26 +164,19 @@ exports.getActivityStats = async (req, res) => {
        WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
        GROUP BY DATE(created_at)
        ORDER BY date ASC`,
-      [parseInt(days)]
+      [days]
     );
 
-    res.json({
-      success: true,
-      data: {
-        period: `Last ${days} days`,
-        actionStats,
-        entityStats,
-        userStats,
-        dailyStats
-      }
+    return response.success(res, 'Activity statistics fetched successfully', {
+      period: `Last ${days} days`,
+      actionStats,
+      entityStats,
+      userStats,
+      dailyStats
     });
   } catch (error) {
     console.error('Error fetching activity stats:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch activity statistics',
-      error: error.message
-    });
+    return response.error(res, error, 500);
   }
 };
 
@@ -228,25 +186,20 @@ exports.getActivityStats = async (req, res) => {
  */
 exports.cleanupOldLogs = async (req, res) => {
   try {
-    const { days = 90 } = req.body;
+    const days = parseInt(req.body.days) || 90;
 
     const [result] = await db.query(
       'DELETE FROM activity_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)',
-      [parseInt(days)]
+      [days]
     );
 
-    res.json({
-      success: true,
-      message: `Deleted ${result.affectedRows} log entries older than ${days} days`,
-      deletedCount: result.affectedRows
+    return response.success(res, `Deleted ${result.affectedRows} log entries older than ${days} days`, {
+      deletedCount: result.affectedRows,
+      periodDays: days
     });
   } catch (error) {
     console.error('Error cleaning up logs:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to cleanup old logs',
-      error: error.message
-    });
+    return response.error(res, error, 500);
   }
 };
 

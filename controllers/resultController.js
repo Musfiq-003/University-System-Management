@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const response = require('../utils/responseHandler');
 
 // Get all student results (optionally filter by ID)
 exports.getAllResults = async (req, res) => {
@@ -13,9 +14,10 @@ exports.getAllResults = async (req, res) => {
         }
 
         const [results] = await db.query(query, params);
-        res.json({ success: true, data: results });
+        return response.success(res, 'Student results fetched successfully', results);
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error('Error fetching results:', error);
+        return response.error(res, error, 500);
     }
 };
 
@@ -25,13 +27,13 @@ exports.updateResult = async (req, res) => {
         const { studentId, cgpa, credits_completed } = req.body;
 
         if (!studentId) {
-            return res.status(400).json({ success: false, message: 'Student ID required' });
+            return response.error(res, 'Student ID required', 400);
         }
 
         // Check if student exists
         const [users] = await db.query('SELECT 1 FROM users WHERE studentId = ?', [studentId]);
         if (users.length === 0) {
-            return res.status(404).json({ success: false, message: 'Student ID not found in database' });
+            return response.error(res, 'Student ID not found in database', 404);
         }
 
         // Upsert
@@ -42,8 +44,9 @@ exports.updateResult = async (req, res) => {
             [studentId, cgpa, credits_completed]
         );
 
-        res.json({ success: true, message: 'Result updated successfully' });
+        return response.success(res, 'Result updated successfully');
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error('Error updating result:', error);
+        return response.error(res, error, 500);
     }
 };
